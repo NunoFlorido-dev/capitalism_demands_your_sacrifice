@@ -8,8 +8,14 @@ let faces = []; //faces array (faces appearing on the camera)
 
 let eyesClosedStartTime = null; //timestamp when eyes first close
 let faceTurnedStartTime = null; //timestamp when face first turns
-let alertTriggered = false; //boolean flag if either condition is met
-let durationThreshold = 2000; //time in milliseconds (2 seconds)
+let alertTriggeredOnScreen = false; //boolean flag if either condition is met
+let durationThresholdOnScreen = 2000; //time in milliseconds (2 seconds)
+
+let faceOffScreenStartTime = null; //timestamp when face isn't on screen
+let alertTriggeredOffScreen = false; //boolean flag if either condition is met
+let durationThresholdOffScreen = 4000; //time in milliseconds (2 seconds)
+
+let alertOpacity = 0; //initialize alert opacity
 
 //function to preload facemesh
 function preload() {
@@ -83,11 +89,26 @@ function draw() {
 
   image(video, 0, 0, width, (width * video.height) / video.width); //display image
 
-  alertTriggered = false; //reset alert at the start of each frame
+  alertTriggeredOnScreen = false; //reset alert at the start of each frame
+  alertTriggeredOffScreen = false;
+
+  let faceDetected = false; // Track if a valid face is detected
 
   if (faces.length > 0) {
     let face = faces[0]; //if there is a face, create a variable for the only face on screen
     let box = face.box; //create box object (for face bounding box)
+
+    // Check if face bounding box is within the visible screen area
+    let faceIsFullyVisible =
+      box.xMin >= 0 &&
+      box.yMin >= 0 &&
+      box.xMin + box.width <= width &&
+      box.yMin + box.height <= height;
+
+    if (faceIsFullyVisible) {
+      faceDetected = true; //a valid face is detected
+      faceOffScreenStartTime = null; //reset the offscreen timer
+    }
 
     //draw bounding box (REMOVE LATER)
     noFill();
@@ -107,8 +128,8 @@ function draw() {
     if (eyeCloseTracking(face, box)) {
       if (eyesClosedStartTime === null) {
         eyesClosedStartTime = millis(); //start timing when eyes first close
-      } else if (millis() - eyesClosedStartTime >= durationThreshold) {
-        alertTriggered = true; //trigger alert if eyes are closed too long
+      } else if (millis() - eyesClosedStartTime >= durationThresholdOnScreen) {
+        alertTriggeredOnScreen = true; //trigger alert if eyes are closed too long
       }
 
       fill(255, 0, 0);
@@ -122,8 +143,8 @@ function draw() {
     if (isFaceLookingSideways(face)) {
       if (faceTurnedStartTime === null) {
         faceTurnedStartTime = millis(); //start timing when face first turns
-      } else if (millis() - faceTurnedStartTime >= durationThreshold) {
-        alertTriggered = true; //trigger alert if face is turned too long
+      } else if (millis() - faceTurnedStartTime >= durationThresholdOnScreen) {
+        alertTriggeredOnScreen = true; //trigger alert if face is turned too long
       }
 
       fill(0, 0, 255);
@@ -132,11 +153,39 @@ function draw() {
     } else {
       faceTurnedStartTime = null; //reset timer if face turns back
     }
+  }
 
-    //show that the alert has been triggered (REMOVE TEXT LATER)
-    if (alertTriggered) {
-      fill(255, 0, 255);
-      textSize(64);
+  //off-screen detection logic
+  if (!faceDetected) {
+    if (faceOffScreenStartTime === null) {
+      faceOffScreenStartTime = millis(); //start tracking time when face disappears
+    } else if (
+      millis() - faceOffScreenStartTime >=
+      durationThresholdOffScreen
+    ) {
+      alertTriggeredOffScreen = true; //alert only if face has been offscreen long enough
+    }
+  }
+
+  let oscillatingOpacity = sin(millis() / 200) * 100 + 100; //oscillating red overlay effect
+
+  //smooth alert opacity transition
+  if (alertTriggeredOnScreen || alertTriggeredOffScreen) {
+    alertOpacity = lerp(alertOpacity, oscillatingOpacity, 0.1); //increase smoothly to 200
+  } else {
+    alertOpacity = lerp(alertOpacity, 0, 0.1); //decrease smoothly to 0
+  }
+
+  //apply the alert overlay effect when alertOpacity > 1
+  if (alertOpacity > 1) {
+    fill(255, 0, 0, alertOpacity);
+    rect(0, 0, width, height);
+
+    fill(255, 255, 0);
+    textSize(64);
+    if (alertTriggeredOffScreen) {
+      text("WORKER AWAY FROM THE SCREEN", width / 2, height / 2 + 160);
+    } else {
       text("WORKER NOT FOCUSED", width / 2, height / 2 + 160);
     }
   }
