@@ -6,7 +6,10 @@ let video;
 
 let faces = []; //faces array (faces appearing on the camera)
 
-let logBoxWidth = false;
+let eyesClosedStartTime = null; //timestamp when eyes first close
+let faceTurnedStartTime = null; //timestamp when face first turns
+let alertTriggered = false; //boolean flag if either condition is met
+let durationThreshold = 2000; //time in milliseconds (2 seconds)
 
 //function to preload facemesh
 function preload() {
@@ -26,11 +29,7 @@ function individualEyeCloseTracking(face, box, a, b) {
 
   let threshold = box.width * 0.045; //threshold for signalling
 
-  if (d <= threshold) {
-    return true;
-  } else {
-    return false;
-  }
+  return d <= threshold;
 }
 
 //function to detect if both eyes are closed
@@ -38,12 +37,7 @@ function eyeCloseTracking(face, box) {
   let leftEyeTracking = individualEyeCloseTracking(face, box, 145, 159); //left eye tracking
   let rightEyeTracking = individualEyeCloseTracking(face, box, 374, 386); //right eye tracking
 
-  //if both eyes are closed
-  if (leftEyeTracking === true && rightEyeTracking == true) {
-    return true;
-  } else {
-    return false;
-  }
+  return leftEyeTracking && rightEyeTracking;
 }
 
 //function to detect if face is looking sideways
@@ -89,10 +83,10 @@ function draw() {
 
   image(video, 0, 0, width, (width * video.height) / video.width); //display image
 
-  eyesClosed = false; //eyes are open as default
+  alertTriggered = false; //reset alert at the start of each frame
+
   if (faces.length > 0) {
     let face = faces[0]; //if there is a face, create a variable for the only face on screen
-
     let box = face.box; //create box object (for face bounding box)
 
     //draw bounding box (REMOVE LATER)
@@ -109,18 +103,41 @@ function draw() {
       circle(keypoint.x, keypoint.y, 5);
     }
 
-    //if eyes are closed, add text to tell that to the user (REMOVE TEXT LATER)
+    //check if eyes are closed
     if (eyeCloseTracking(face, box)) {
+      if (eyesClosedStartTime === null) {
+        eyesClosedStartTime = millis(); //start timing when eyes first close
+      } else if (millis() - eyesClosedStartTime >= durationThreshold) {
+        alertTriggered = true; //trigger alert if eyes are closed too long
+      }
+
       fill(255, 0, 0);
       textSize(64);
       text("EYES CLOSED", width / 2, height / 2);
+    } else {
+      eyesClosedStartTime = null; //reset timer if eyes open
     }
 
-    //if face is sideways, add text to tell that to the user (REMOVE TEXT LATER)
+    //check if face is turned sideways
     if (isFaceLookingSideways(face)) {
+      if (faceTurnedStartTime === null) {
+        faceTurnedStartTime = millis(); //start timing when face first turns
+      } else if (millis() - faceTurnedStartTime >= durationThreshold) {
+        alertTriggered = true; //trigger alert if face is turned too long
+      }
+
       fill(0, 0, 255);
       textSize(64);
       text("FACE TURNED", width / 2, height / 2 + 80);
+    } else {
+      faceTurnedStartTime = null; //reset timer if face turns back
+    }
+
+    //show that the alert has been triggered (REMOVE TEXT LATER)
+    if (alertTriggered) {
+      fill(255, 0, 255);
+      textSize(64);
+      text("WORKER NOT FOCUSED", width / 2, height / 2 + 160);
     }
   }
 }
