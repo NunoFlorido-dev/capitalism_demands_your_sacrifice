@@ -6,6 +6,8 @@ let video;
 
 let faces = []; //faces array (faces appearing on the camera)
 
+let logBoxWidth = false;
+
 //function to preload facemesh
 function preload() {
   faceMesh = ml5.faceMesh(options); //preload facemesh
@@ -17,11 +19,12 @@ function gotFaces(results) {
 }
 
 //function to detect if each eye is closed
-function individualEyeCloseTracking(face, a, b) {
+function individualEyeCloseTracking(face, box, a, b) {
   let keypointA = face.keypoints[a]; //get upper eye keypoint
   let keypointB = face.keypoints[b]; //get lower eye keypoint
   let d = dist(keypointA.x, keypointA.y, keypointB.x, keypointB.y); //get distance between the keypoints
-  let threshold = 12; //threshold for signalling
+
+  let threshold = box.width * 0.045; //threshold for signalling
 
   if (d <= threshold) {
     return true;
@@ -31,9 +34,9 @@ function individualEyeCloseTracking(face, a, b) {
 }
 
 //function to detect if both eyes are closed
-function eyeCloseTracking(face) {
-  let leftEyeTracking = individualEyeCloseTracking(face, 145, 159); //left eye tracking
-  let rightEyeTracking = individualEyeCloseTracking(face, 374, 386); //right eye tracking
+function eyeCloseTracking(face, box) {
+  let leftEyeTracking = individualEyeCloseTracking(face, box, 145, 159); //left eye tracking
+  let rightEyeTracking = individualEyeCloseTracking(face, box, 374, 386); //right eye tracking
 
   //if both eyes are closed
   if (leftEyeTracking === true && rightEyeTracking == true) {
@@ -90,6 +93,14 @@ function draw() {
   if (faces.length > 0) {
     let face = faces[0]; //if there is a face, create a variable for the only face on screen
 
+    let box = face.box; //create box object (for face bounding box)
+
+    //draw bounding box (REMOVE LATER)
+    noFill();
+    stroke(0, 0, 255);
+    strokeWeight(2);
+    rect(box.xMin, box.yMin, box.width, box.height);
+
     //draw the keypoints of the face mesh (REMOVE LATER)
     for (let j = 0; j < face.keypoints.length; j++) {
       let keypoint = face.keypoints[j];
@@ -99,7 +110,7 @@ function draw() {
     }
 
     //if eyes are closed, add text to tell that to the user (REMOVE TEXT LATER)
-    if (eyeCloseTracking(face)) {
+    if (eyeCloseTracking(face, box)) {
       fill(255, 0, 0);
       textSize(64);
       text("EYES CLOSED", width / 2, height / 2);
