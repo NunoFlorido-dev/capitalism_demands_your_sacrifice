@@ -16,6 +16,10 @@ class FaceTracker {
     // Duration thresholds for alerts
     this.durationThresholdOnScreen = 2000; // 2 seconds
     this.durationThresholdOffScreen = 4000; // 4 seconds
+
+    // Load warning image
+    this.warningAsset = loadImage("./assets/warning/warning.jpg");
+    this.warningFont = loadFont("./assets/fonts/PPFraktionMono-Bold.otf");
   }
 
   updateFaces(results) {
@@ -40,13 +44,13 @@ class FaceTracker {
         this.faceOffScreenStartTime = null;
       }
 
-      //draw bounding box (REMOVE LATER)
+      // Draw bounding box (REMOVE LATER)
       noFill();
       stroke(0, 0, 255);
       strokeWeight(2);
       rect(box.xMin, box.yMin, box.width, box.height);
 
-      //draw the keypoints of the face mesh (REMOVE LATER)
+      // Draw the keypoints of the face mesh (REMOVE LATER)
       for (let j = 0; j < face.keypoints.length; j++) {
         let keypoint = face.keypoints[j];
         fill(0, 255, 0);
@@ -62,7 +66,7 @@ class FaceTracker {
           millis() - this.eyesClosedStartTime >=
           this.durationThresholdOnScreen
         ) {
-          this.alertTriggeredOnScreen = "EYES CLOSED";
+          this.alertTriggeredOnScreen = "SLEEPY WORKER, WAKE UP!";
         }
       } else {
         this.eyesClosedStartTime = null;
@@ -76,7 +80,7 @@ class FaceTracker {
           millis() - this.faceTurnedStartTime >=
           this.durationThresholdOnScreen
         ) {
-          this.alertTriggeredOnScreen = "FACE TURNED";
+          this.alertTriggeredOnScreen = "THE WORK IS ON THE COMPUTER, DUMMY!";
         }
       } else {
         this.faceTurnedStartTime = null;
@@ -90,7 +94,7 @@ class FaceTracker {
           millis() - this.faceDownStartTime >=
           this.durationThresholdOnScreen
         ) {
-          this.alertTriggeredOnScreen = "FACE DOWN";
+          this.alertTriggeredOnScreen = "STOP SCROLLING, GET WORKING!";
         }
       } else {
         this.faceDownStartTime = null;
@@ -104,7 +108,7 @@ class FaceTracker {
           millis() - this.faceUpStartTime >=
           this.durationThresholdOnScreen
         ) {
-          this.alertTriggeredOnScreen = "FACE UP";
+          this.alertTriggeredOnScreen = "BE FOCUSED AND RETURN TO WORK!";
         }
       } else {
         this.faceUpStartTime = null;
@@ -117,7 +121,8 @@ class FaceTracker {
         millis() - this.faceOffScreenStartTime >=
         this.durationThresholdOffScreen
       ) {
-        this.alertTriggeredOffScreen = "WORKER AWAY FROM THE SCREEN";
+        this.alertTriggeredOffScreen =
+          "YOU MAY ONLY LEAVE WHEN THE WORK IS DONE!";
       }
     }
 
@@ -135,14 +140,27 @@ class FaceTracker {
       fill(255, 0, 0, this.alertOpacity);
       rect(0, 0, width, height);
 
-      fill(255, 255, 0);
-      textSize(64);
+      textFont(this.warningFont);
+
+      // Apply transparency to the image
+      tint(255, this.alertOpacity + 125);
+      image(
+        this.warningAsset,
+        width / 2 - 550 / 2,
+        height / 2 - 335 / 2,
+        550,
+        335
+      );
+      fill(255, 255, 0, this.alertOpacity + 125);
       textAlign(CENTER, CENTER);
       if (this.alertTriggeredOffScreen) {
-        text(this.alertTriggeredOffScreen, width / 2, height / 2);
+        textSize(20);
+        text(this.alertTriggeredOffScreen, width / 2, height / 2 + 123);
       } else if (this.alertTriggeredOnScreen) {
-        text(this.alertTriggeredOnScreen, width / 2, height / 2);
+        textSize(24);
+        text(this.alertTriggeredOnScreen, width / 2, height / 2 + 123);
       }
+      noTint(); // Reset tint to prevent affecting other images
     }
   }
 
