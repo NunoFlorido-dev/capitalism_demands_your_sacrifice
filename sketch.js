@@ -1,192 +1,214 @@
-let faceMesh; //variable for facemesh
-let options = { maxFaces: 1, refineLandmarks: false, flipped: true }; //settings for the facemesh object
+class FaceTracker {
+  constructor(video) {
+    this.video = video;
+    this.faces = [];
+    this.alertOpacity = 0;
+    this.alertTriggeredOnScreen = false;
+    this.alertTriggeredOffScreen = false;
 
-let width, height; //width and height of the canvas
+    // Timers for tracking various conditions
+    this.eyesClosedStartTime = null;
+    this.faceTurnedStartTime = null;
+    this.faceDownStartTime = null;
+    this.faceUpStartTime = null;
+    this.faceOffScreenStartTime = null;
+
+    // Duration thresholds for alerts
+    this.durationThresholdOnScreen = 2000; // 2 seconds
+    this.durationThresholdOffScreen = 4000; // 4 seconds
+  }
+
+  updateFaces(results) {
+    this.faces = results;
+  }
+
+  detect() {
+    this.alertTriggeredOnScreen = false;
+    this.alertTriggeredOffScreen = false;
+
+    if (this.faces.length > 0) {
+      let face = this.faces[0];
+      let box = face.box;
+
+      let faceIsFullyVisible =
+        box.xMin >= 0 &&
+        box.yMin >= 0 &&
+        box.xMin + box.width <= width &&
+        box.yMin + box.height <= height;
+
+      if (faceIsFullyVisible) {
+        this.faceOffScreenStartTime = null;
+      }
+
+      //draw bounding box (REMOVE LATER)
+      noFill();
+      stroke(0, 0, 255);
+      strokeWeight(2);
+      rect(box.xMin, box.yMin, box.width, box.height);
+
+      //draw the keypoints of the face mesh (REMOVE LATER)
+      for (let j = 0; j < face.keypoints.length; j++) {
+        let keypoint = face.keypoints[j];
+        fill(0, 255, 0);
+        noStroke();
+        circle(keypoint.x, keypoint.y, 5);
+      }
+
+      // Check for closed eyes
+      if (this.eyeCloseTracking(face, box)) {
+        if (this.eyesClosedStartTime === null) {
+          this.eyesClosedStartTime = millis();
+        } else if (
+          millis() - this.eyesClosedStartTime >=
+          this.durationThresholdOnScreen
+        ) {
+          this.alertTriggeredOnScreen = "EYES CLOSED";
+        }
+      } else {
+        this.eyesClosedStartTime = null;
+      }
+
+      // Check if face is turned sideways
+      if (this.isFaceLookingSideways(face)) {
+        if (this.faceTurnedStartTime === null) {
+          this.faceTurnedStartTime = millis();
+        } else if (
+          millis() - this.faceTurnedStartTime >=
+          this.durationThresholdOnScreen
+        ) {
+          this.alertTriggeredOnScreen = "FACE TURNED";
+        }
+      } else {
+        this.faceTurnedStartTime = null;
+      }
+
+      // Check if face is looking down
+      if (this.isFaceLookingDown(face)) {
+        if (this.faceDownStartTime === null) {
+          this.faceDownStartTime = millis();
+        } else if (
+          millis() - this.faceDownStartTime >=
+          this.durationThresholdOnScreen
+        ) {
+          this.alertTriggeredOnScreen = "FACE DOWN";
+        }
+      } else {
+        this.faceDownStartTime = null;
+      }
+
+      // Check if face is looking up
+      if (this.isFaceLookingUp(face)) {
+        if (this.faceUpStartTime === null) {
+          this.faceUpStartTime = millis();
+        } else if (
+          millis() - this.faceUpStartTime >=
+          this.durationThresholdOnScreen
+        ) {
+          this.alertTriggeredOnScreen = "FACE UP";
+        }
+      } else {
+        this.faceUpStartTime = null;
+      }
+    } else {
+      // Face is off-screen
+      if (this.faceOffScreenStartTime === null) {
+        this.faceOffScreenStartTime = millis();
+      } else if (
+        millis() - this.faceOffScreenStartTime >=
+        this.durationThresholdOffScreen
+      ) {
+        this.alertTriggeredOffScreen = "WORKER AWAY FROM THE SCREEN";
+      }
+    }
+
+    let oscillatingOpacity = sin(millis() / 200) * 100 + 100;
+
+    if (this.alertTriggeredOnScreen || this.alertTriggeredOffScreen) {
+      this.alertOpacity = lerp(this.alertOpacity, oscillatingOpacity, 0.1);
+    } else {
+      this.alertOpacity = lerp(this.alertOpacity, 0, 0.1);
+    }
+  }
+
+  drawAlerts() {
+    if (this.alertOpacity > 1) {
+      fill(255, 0, 0, this.alertOpacity);
+      rect(0, 0, width, height);
+
+      fill(255, 255, 0);
+      textSize(64);
+      textAlign(CENTER, CENTER);
+      if (this.alertTriggeredOffScreen) {
+        text(this.alertTriggeredOffScreen, width / 2, height / 2);
+      } else if (this.alertTriggeredOnScreen) {
+        text(this.alertTriggeredOnScreen, width / 2, height / 2);
+      }
+    }
+  }
+
+  eyeCloseTracking(face, box) {
+    return (
+      this.individualEyeCloseTracking(face, box, 145, 159) &&
+      this.individualEyeCloseTracking(face, box, 374, 386)
+    );
+  }
+
+  individualEyeCloseTracking(face, box, a, b) {
+    let keypointA = face.keypoints[a];
+    let keypointB = face.keypoints[b];
+    let d = dist(keypointA.x, keypointA.y, keypointB.x, keypointB.y);
+    let threshold = box.width * 0.045;
+    return d <= threshold;
+  }
+
+  isFaceLookingSideways(face) {
+    let noseX = face.keypoints[1].x * width;
+    let leftEyeX = face.keypoints[33].x * width;
+    let rightEyeX = face.keypoints[263].x * width;
+    let eyeCenterX = (leftEyeX + rightEyeX) / 2;
+    let threshold = Math.abs(rightEyeX - leftEyeX) * 0.35;
+    return Math.abs(noseX - eyeCenterX) > threshold;
+  }
+
+  isFaceLookingDown(face) {
+    let noseY = face.keypoints[1].y * height;
+    let foreheadY = face.keypoints[10].y * height;
+    let chinY = face.keypoints[152].y * height;
+    return noseY > foreheadY + (chinY - foreheadY) * 0.7;
+  }
+
+  isFaceLookingUp(face) {
+    let noseY = face.keypoints[1].y * height;
+    let foreheadY = face.keypoints[10].y * height;
+    let chinY = face.keypoints[152].y * height;
+    return noseY < foreheadY - (chinY - foreheadY) * 0.4;
+  }
+}
+
+let faceMesh;
+let tracker;
 let video;
 
-let faces = []; //faces array (faces appearing on the camera)
-
-let eyesClosedStartTime = null; //timestamp when eyes first close
-let faceTurnedStartTime = null; //timestamp when face first turns
-let alertTriggeredOnScreen = false; //boolean flag if either condition is met
-let durationThresholdOnScreen = 2000; //time in milliseconds (2 seconds)
-
-let faceOffScreenStartTime = null; //timestamp when face isn't on screen
-let alertTriggeredOffScreen = false; //boolean flag if either condition is met
-let durationThresholdOffScreen = 4000; //time in milliseconds (2 seconds)
-
-let alertOpacity = 0; //initialize alert opacity
-
-//function to preload facemesh
 function preload() {
-  faceMesh = ml5.faceMesh(options); //preload facemesh
-}
-
-//function to get the number of faces
-function gotFaces(results) {
-  faces = results; //function for updating the faces array with the results
-}
-
-//function to detect if each eye is closed
-function individualEyeCloseTracking(face, box, a, b) {
-  let keypointA = face.keypoints[a]; //get upper eye keypoint
-  let keypointB = face.keypoints[b]; //get lower eye keypoint
-  let d = dist(keypointA.x, keypointA.y, keypointB.x, keypointB.y); //get distance between the keypoints
-
-  let threshold = box.width * 0.045; //threshold for signalling
-
-  return d <= threshold;
-}
-
-//function to detect if both eyes are closed
-function eyeCloseTracking(face, box) {
-  let leftEyeTracking = individualEyeCloseTracking(face, box, 145, 159); //left eye tracking
-  let rightEyeTracking = individualEyeCloseTracking(face, box, 374, 386); //right eye tracking
-
-  return leftEyeTracking && rightEyeTracking;
-}
-
-//function to detect if face is looking sideways
-function isFaceLookingSideways(face) {
-  let nose = face.keypoints[1]; //nose tip
-  let leftEye = face.keypoints[33]; //left eye corner
-  let rightEye = face.keypoints[263]; //right eye corner
-
-  //convert normalized keypoints to actual pixel positions
-  let noseX = nose.x * width;
-  let leftEyeX = leftEye.x * width;
-  let rightEyeX = rightEye.x * width;
-
-  //find the midpoint between eyes
-  let eyeCenterX = (leftEyeX + rightEyeX) / 2;
-
-  //compute how far the nose is from the eye center
-  let noseOffset = noseX - eyeCenterX;
-
-  //use a proportion of eye distance as a threshold
-  let eyeDistance = Math.abs(rightEyeX - leftEyeX);
-  let threshold = eyeDistance * 0.35; //adjust as needed
-
-  return Math.abs(noseOffset) > threshold;
+  faceMesh = ml5.faceMesh({
+    maxFaces: 1,
+    refineLandmarks: false,
+    flipped: true,
+  });
 }
 
 function setup() {
-  width = windowWidth; //width is the window width
-  height = windowHeight; //height is the window height
-  createCanvas(width, height); //create canvas with the width and height of the window
-
-  video = createCapture(VIDEO, { flipped: true }); //create capture object (flipped)
-  video.size(width, height); //capture size is the width and height of the window
-  video.hide(); //hide capture and use an image with it as an input
-
-  faceMesh.detectStart(video, gotFaces); //start detection with the capture object and the gotFaces function
+  createCanvas(windowWidth, windowHeight);
+  video = createCapture(VIDEO, { flipped: true });
+  video.size(width, height);
+  video.hide();
+  tracker = new FaceTracker(video);
+  faceMesh.detectStart(video, (results) => tracker.updateFaces(results));
 }
 
 function draw() {
   background(220);
-  width = windowWidth;
-  height = windowHeight; //update width and height constantly
-
-  image(video, 0, 0, width, (width * video.height) / video.width); //display image
-
-  alertTriggeredOnScreen = false; //reset alert at the start of each frame
-  alertTriggeredOffScreen = false;
-
-  let faceDetected = false; // Track if a valid face is detected
-
-  if (faces.length > 0) {
-    let face = faces[0]; //if there is a face, create a variable for the only face on screen
-    let box = face.box; //create box object (for face bounding box)
-
-    // Check if face bounding box is within the visible screen area
-    let faceIsFullyVisible =
-      box.xMin >= 0 &&
-      box.yMin >= 0 &&
-      box.xMin + box.width <= width &&
-      box.yMin + box.height <= height;
-
-    if (faceIsFullyVisible) {
-      faceDetected = true; //a valid face is detected
-      faceOffScreenStartTime = null; //reset the offscreen timer
-    }
-
-    //draw bounding box (REMOVE LATER)
-    noFill();
-    stroke(0, 0, 255);
-    strokeWeight(2);
-    rect(box.xMin, box.yMin, box.width, box.height);
-
-    //draw the keypoints of the face mesh (REMOVE LATER)
-    for (let j = 0; j < face.keypoints.length; j++) {
-      let keypoint = face.keypoints[j];
-      fill(0, 255, 0);
-      noStroke();
-      circle(keypoint.x, keypoint.y, 5);
-    }
-
-    //check if eyes are closed
-    if (eyeCloseTracking(face, box)) {
-      if (eyesClosedStartTime === null) {
-        eyesClosedStartTime = millis(); //start timing when eyes first close
-      } else if (millis() - eyesClosedStartTime >= durationThresholdOnScreen) {
-        alertTriggeredOnScreen = true; //trigger alert if eyes are closed too long
-      }
-
-      fill(255, 0, 0);
-      textSize(64);
-      text("EYES CLOSED", width / 2, height / 2);
-    } else {
-      eyesClosedStartTime = null; //reset timer if eyes open
-    }
-
-    //check if face is turned sideways
-    if (isFaceLookingSideways(face)) {
-      if (faceTurnedStartTime === null) {
-        faceTurnedStartTime = millis(); //start timing when face first turns
-      } else if (millis() - faceTurnedStartTime >= durationThresholdOnScreen) {
-        alertTriggeredOnScreen = true; //trigger alert if face is turned too long
-      }
-
-      fill(0, 0, 255);
-      textSize(64);
-      text("FACE TURNED", width / 2, height / 2 + 80);
-    } else {
-      faceTurnedStartTime = null; //reset timer if face turns back
-    }
-  }
-
-  //off-screen detection logic
-  if (!faceDetected) {
-    if (faceOffScreenStartTime === null) {
-      faceOffScreenStartTime = millis(); //start tracking time when face disappears
-    } else if (
-      millis() - faceOffScreenStartTime >=
-      durationThresholdOffScreen
-    ) {
-      alertTriggeredOffScreen = true; //alert only if face has been offscreen long enough
-    }
-  }
-
-  let oscillatingOpacity = sin(millis() / 200) * 100 + 100; //oscillating red overlay effect
-
-  //smooth alert opacity transition
-  if (alertTriggeredOnScreen || alertTriggeredOffScreen) {
-    alertOpacity = lerp(alertOpacity, oscillatingOpacity, 0.1); //increase smoothly to 200
-  } else {
-    alertOpacity = lerp(alertOpacity, 0, 0.1); //decrease smoothly to 0
-  }
-
-  //apply the alert overlay effect when alertOpacity > 1
-  if (alertOpacity > 1) {
-    fill(255, 0, 0, alertOpacity);
-    rect(0, 0, width, height);
-
-    fill(255, 255, 0);
-    textSize(64);
-    if (alertTriggeredOffScreen) {
-      text("WORKER AWAY FROM THE SCREEN", width / 2, height / 2 + 160);
-    } else {
-      text("WORKER NOT FOCUSED", width / 2, height / 2 + 160);
-    }
-  }
+  image(video, 0, 0, width, (width * video.height) / video.width);
+  tracker.detect();
+  tracker.drawAlerts();
 }
