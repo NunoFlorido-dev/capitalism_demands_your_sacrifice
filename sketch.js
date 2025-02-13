@@ -185,25 +185,106 @@ class FaceTracker {
     return noseY < foreheadY - (chinY - foreheadY) * 0.4;
   }
 
+  // Getter method to access gaze data
+  getGazeData() {
+    if (this.gazeX !== undefined && this.gazeY !== undefined) {
+      return [this.gazeX, this.gazeY];
+    }
+    return null;
+  }
+
   eyeGazeTracking(face) {
-    // Get pupil positions
     let leftPupil = face.keypoints[159];
     let rightPupil = face.keypoints[386];
 
     if (leftPupil && rightPupil) {
-      // Estimate gaze direction
-      let gazeX = (leftPupil.x + rightPupil.x) / 2;
-      let gazeY = (leftPupil.y + rightPupil.y) / 2;
+      this.gazeX = (leftPupil.x + rightPupil.x) / 2;
+      this.gazeY = (leftPupil.y + rightPupil.y) / 2;
 
       fill(0, 255, 0);
       textSize(16);
-      text(`Gaze at: ${gazeX.toFixed(2)}, ${gazeY.toFixed(2)}`, 10, 20);
+      text(
+        `Gaze at: ${this.gazeX.toFixed(2)}, ${this.gazeY.toFixed(2)}`,
+        10,
+        20
+      );
 
       fill(0, 0, 255);
-      circle(gazeX.toFixed(2), gazeY.toFixed(2), 20);
+      circle(this.gazeX, this.gazeY, 20); // Draw gaze location on screen
     } else {
       console.error("Left or right pupil data is missing");
+      this.gazeX = null;
+      this.gazeY = null;
     }
+  }
+}
+
+class FollowTheBall {
+  constructor(faceTracker) {
+    this.faceTracker = faceTracker; // Use the existing face tracker
+
+    this.ballX = width / 2;
+    this.ballY = height / 2;
+    this.ballColorNormal = color(255, 255, 0);
+    this.ballColorAccept = color(0, 255, 0);
+    this.ballColor = this.ballColorNormal;
+
+    // Initial noise offset values for X and Y
+    this.noiseOffsetX = random(1000);
+    this.noiseOffsetY = random(1000);
+  }
+
+  moveBall() {
+    // Update noise values over time for smooth movement
+    this.randomSpdX = noise(this.noiseOffsetX);
+    this.randomSpdY = noise(this.noiseOffsetY);
+
+    // Apply the Perlin noise to the ball's position, but with slower movement
+    this.ballX += (this.randomSpdX - 0.5) * 2; // Adjust the multiplier for slower movement
+    this.ballY += (this.randomSpdY - 0.5) * 2; // Adjust the multiplier for slower movement
+
+    // Increment noise offsets to get continuous movement
+    this.noiseOffsetX += 0.01;
+    this.noiseOffsetY += 0.01;
+
+    // Constrain ball's position to make sure it stays within the screen bounds
+    this.ballX = constrain(this.ballX, 200, width - 200);
+    this.ballY = constrain(this.ballY, 250, height - 250);
+  }
+
+  drawBall() {
+    noStroke();
+    if (this.getCircleProximity()) {
+      this.ballColor = this.ballColorAccept;
+    } else {
+      this.ballColor = this.ballColorNormal;
+    }
+    fill(
+      this.ballColor.levels[0],
+      this.ballColor.levels[1],
+      this.ballColor.levels[2],
+      200
+    );
+    circle(this.ballX, this.ballY, 50);
+    noTint();
+  }
+
+  // Get the distance between the eye gaze and the ball
+  getDistance(x1, y1, x2, y2) {
+    return dist(x1, y1, x2, y2);
+  }
+
+  getCircleProximity() {
+    let gazeData = this.faceTracker.getGazeData(); // Use shared FaceTracker
+    if (!gazeData) return false;
+
+    let gazeX = gazeData[0];
+    let gazeY = gazeData[1];
+
+    let distance = this.getDistance(this.ballX, this.ballY, gazeX, gazeY);
+    console.log("Distance to Ball: ", distance);
+
+    return distance <= 27.5;
   }
 }
 
@@ -211,6 +292,7 @@ let faceMesh;
 let tracker;
 let video;
 let gestures;
+let ballgame;
 
 function preload() {
   faceMesh = ml5.faceMesh({
@@ -220,27 +302,16 @@ function preload() {
   });
 }
 
-function faceReady() {
-  faceApi.detect(gotFaces);
-}
-
-function gotFaces(error, result) {
-  if (error) {
-    console.log(error);
-    return;
-  }
-  detections = result;
-  faceApi.detect(gotFaces);
-}
-
 function setup() {
   createCanvas(windowWidth, windowHeight);
   video = createCapture(VIDEO, { flipped: true });
   video.size(width, height);
   video.hide();
-  tracker = new FaceTracker(video);
 
-  // Start detecting faces and pass results to both tracker and gestures
+  tracker = new FaceTracker(video); // Create one tracker instance
+  ballgame = new FollowTheBall(tracker); // Pass it to FollowTheBall
+
+  // Start detecting faces and update tracker
   faceMesh.detectStart(video, (results) => {
     tracker.updateFaces(results);
   });
@@ -251,4 +322,6 @@ function draw() {
   image(video, 0, 0, width, (width * video.height) / video.width);
   tracker.detect();
   tracker.drawAlerts();
+  ballgame.moveBall();
+  ballgame.drawBall();
 }
