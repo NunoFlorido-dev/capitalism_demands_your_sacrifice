@@ -301,44 +301,54 @@ class GameSystem {
     this.penaltyTimeAlert = 1000;
     this.penaltyTimeGame = 3000;
 
+    // Alert opacity for red screen (similar to FaceTracker)
+    this.alertOpacity = 0;
+    this.alertFlashDuration = 500; // Flash duration in milliseconds
+    this.alertFlashStartTime = null; // Track the start time of the flash
+
     // Get UI elements
     this.scoreBar = document.getElementById("scoreBar");
     this.scoreText = document.getElementById("scoreText");
   }
 
-  addScore(points) {
-    this.score = Math.min(this.score + points, this.maxScore);
-    this.updateScoreBar();
-  }
-
   addPenaltyAlert(points) {
     let currentTime = millis();
-    console.log("Current Time: " + currentTime); // Log the current time
-    console.log("Last Penalty Time: " + this.lastPenaltyTime); // Log the last penalty time
 
     if (currentTime - this.lastPenaltyTime >= this.penaltyTimeAlert) {
-      console.log("Penalty Applied: " + points); // Log the penalty points being deducted
-      this.score = Math.max(this.score + points, 0); // Prevent negative score
+      this.score = Math.min(this.score + points, this.maxScore);
       this.lastPenaltyTime = currentTime;
       this.updateScoreBar();
+
+      // Trigger the red screen alert for penalty
+      this.triggerRedAlert();
     } else {
-      console.log("Penalty not applied yet (cooldown in effect)"); // Log if penalty is skipped
     }
   }
 
   addPenaltyGame(points) {
     let currentTime = millis();
-    console.log("Current Time: " + currentTime); // Log the current time
-    console.log("Last Penalty Time: " + this.lastPenaltyTime); // Log the last penalty time
 
     if (currentTime - this.lastPenaltyTime >= this.penaltyTimeGame) {
-      console.log("Penalty Applied: " + points); // Log the penalty points being deducted
-      this.score = Math.max(this.score + points, 0); // Prevent negative score
+      this.score = Math.min(this.score + points, this.maxScore);
       this.lastPenaltyTime = currentTime;
       this.updateScoreBar();
+
+      // Trigger the red screen alert for penalty
+      this.triggerRedAlert();
     } else {
-      console.log("Penalty not applied yet (cooldown in effect)"); // Log if penalty is skipped
     }
+  }
+
+  triggerRedAlert() {
+    // Smoothly increase the alert opacity
+    this.alertOpacity = lerp(this.alertOpacity, 255, 0.5);
+  }
+
+  triggerFlashAlert() {
+    this.alertOpacity = 255; // Make the alert fully visible
+
+    // Set the start time for the flash
+    this.alertFlashStartTime = millis();
   }
 
   resetScore() {
@@ -350,6 +360,24 @@ class GameSystem {
     let progress = (this.score / this.maxScore) * 100;
     this.scoreBar.style.width = progress + "%";
     this.scoreText.textContent = `Score: ${this.score} / ${this.maxScore}`;
+  }
+
+  // Draw the red alert screen when penalty is triggered
+  drawAlerts() {
+    // Check if the flash should disappear
+    if (
+      this.alertFlashStartTime !== null &&
+      millis() - this.alertFlashStartTime <= this.alertFlashDuration
+    ) {
+      // Keep the alert visible for the duration of the flash
+      fill(255, 0, 0, this.alertOpacity);
+      rect(0, 0, width, height);
+    } else if (this.alertOpacity > 1) {
+      // After the flash, apply the smooth fade for the penalty alert
+      this.alertOpacity = lerp(this.alertOpacity, 0, 0.1);
+      fill(255, 0, 0, this.alertOpacity);
+      rect(0, 0, width, height);
+    }
   }
 }
 
@@ -388,5 +416,6 @@ function draw() {
   image(video, 0, 0, width, (width * video.height) / video.width);
   tracker.detect();
   tracker.drawAlerts();
+  game.drawAlerts();
   ballgame.playBall();
 }
