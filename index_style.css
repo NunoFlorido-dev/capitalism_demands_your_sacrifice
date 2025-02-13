@@ -13,6 +13,11 @@ canvas {
   src: url("./assets/fonts/OTNeueMontreal-RegularSqueezed.woff");
 }
 
+@font-face{
+  font-family: "OT Neue Montreal Bold";
+  src: url("./assets/fonts/OTNeueMontreal-BoldSqueezed.woff");
+}
+
  /* Container for the score bar */
  .score-container {
   position: fixed;
@@ -42,4 +47,29 @@ canvas {
   color: #000;
   top: 50%;
   transform: translateY(-50%);
+}
+
+.info-container{
+  position: fixed;
+  width: 100%;
+}
+
+.right-info{
+  font-family: "OT Neue Montreal Regular", sans-serif;
+  font-size: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding-right: 2rem;
+  padding-top: 1rem;
+  padding-left: 2rem;
+}
+
+.info-container div:nth-child(1){
+  color: #f0d946;
+}
+
+
+.info-container div:nth-child(2){
+  color: #f0d946;
 }

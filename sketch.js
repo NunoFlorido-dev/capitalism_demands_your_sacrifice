@@ -214,7 +214,6 @@ class FaceTracker {
 class FollowTheBall {
   constructor(faceTracker, game) {
     this.faceTracker = faceTracker; // Use the existing face tracker
-
     this.game = game;
 
     this.ballX = width / 2;
@@ -234,8 +233,8 @@ class FollowTheBall {
     this.randomSpdY = noise(this.noiseOffsetY);
 
     // Apply the Perlin noise to the ball's position, but with slower movement
-    this.ballX += (this.randomSpdX - 0.5) * 2; // Adjust the multiplier for slower movement
-    this.ballY += (this.randomSpdY - 0.5) * 2; // Adjust the multiplier for slower movement
+    this.ballX += (this.randomSpdX - 0.5) * 2 * this.game.ballSpeedMultiplier; // Adjust the multiplier for speed
+    this.ballY += (this.randomSpdY - 0.5) * 2 * this.game.ballSpeedMultiplier; // Adjust the multiplier for speed
 
     // Increment noise offsets to get continuous movement
     this.noiseOffsetX += 0.01;
@@ -259,7 +258,7 @@ class FollowTheBall {
       this.ballColor.levels[2],
       200
     );
-    circle(this.ballX, this.ballY, 50);
+    circle(this.ballX, this.ballY, 75);
     noTint();
   }
 
@@ -277,7 +276,7 @@ class FollowTheBall {
 
     let distance = this.getDistance(this.ballX, this.ballY, gazeX, gazeY);
 
-    return distance <= 27.5;
+    return distance <= 35;
   }
 
   playBall() {
@@ -295,20 +294,55 @@ class GameSystem {
     this.level = 1;
     this.score = 0;
     this.maxScore = 100;
-    this.lastPenaltyTime = 0; // Store last penalty time
+    this.lastPenaltyTime = 0;
 
     // Penalty Time
     this.penaltyTimeAlert = 1000;
     this.penaltyTimeGame = 3000;
 
-    // Alert opacity for red screen (similar to FaceTracker)
+    // Alert opacity for red screen
     this.alertOpacity = 0;
-    this.alertFlashDuration = 500; // Flash duration in milliseconds
-    this.alertFlashStartTime = null; // Track the start time of the flash
+    this.alertFlashDuration = 500;
+    this.alertFlashStartTime = null;
+
+    // Level and timer properties
+    this.levelStartTime = millis(); // Start the timer for level 1
+    this.levelDuration = 30000; // 30 seconds per level
+    this.levelEndTime = this.levelStartTime + this.levelDuration; // End time for the current level
 
     // Get UI elements
     this.scoreBar = document.getElementById("scoreBar");
     this.scoreText = document.getElementById("scoreText");
+
+    // HTML elements for level and timer
+    this.levelDisplay = document.getElementById("levelDisplay");
+    this.timerDisplay = document.getElementById("timerDisplay");
+
+    // Ball speed modifier based on level
+    this.ballSpeedMultiplier = 1;
+  }
+
+  update() {
+    let currentTime = millis();
+
+    // Check if it's time to move to the next level
+    if (currentTime >= this.levelEndTime) {
+      this.level++;
+      if (this.level > 5) {
+        this.level = 1; // Reset to level 1 after level 5
+      }
+      this.levelStartTime = currentTime;
+      this.levelEndTime = this.levelStartTime + this.levelDuration; // Reset the level end time
+
+      // Update the ball speed multiplier based on the level
+      if (this.level === 1) {
+        this.ballSpeedMultiplier = 1;
+      } else if (this.level === 3) {
+        this.ballSpeedMultiplier = 10;
+      } else if (this.level === 5) {
+        this.ballSpeedMultiplier = 20;
+      }
+    }
   }
 
   addPenaltyAlert(points) {
@@ -321,7 +355,6 @@ class GameSystem {
 
       // Trigger the red screen alert for penalty
       this.triggerRedAlert();
-    } else {
     }
   }
 
@@ -335,20 +368,11 @@ class GameSystem {
 
       // Trigger the red screen alert for penalty
       this.triggerRedAlert();
-    } else {
     }
   }
 
   triggerRedAlert() {
-    // Smoothly increase the alert opacity
     this.alertOpacity = lerp(this.alertOpacity, 255, 0.5);
-  }
-
-  triggerFlashAlert() {
-    this.alertOpacity = 255; // Make the alert fully visible
-
-    // Set the start time for the flash
-    this.alertFlashStartTime = millis();
   }
 
   resetScore() {
@@ -362,22 +386,29 @@ class GameSystem {
     this.scoreText.textContent = `Score: ${this.score} / ${this.maxScore}`;
   }
 
-  // Draw the red alert screen when penalty is triggered
   drawAlerts() {
-    // Check if the flash should disappear
+    // Drawing the red alert screen logic
     if (
       this.alertFlashStartTime !== null &&
       millis() - this.alertFlashStartTime <= this.alertFlashDuration
     ) {
-      // Keep the alert visible for the duration of the flash
       fill(255, 0, 0, this.alertOpacity);
       rect(0, 0, width, height);
     } else if (this.alertOpacity > 1) {
-      // After the flash, apply the smooth fade for the penalty alert
       this.alertOpacity = lerp(this.alertOpacity, 0, 0.1);
       fill(255, 0, 0, this.alertOpacity);
       rect(0, 0, width, height);
     }
+  }
+
+  // Display level and timer on the screen
+  drawLevelAndTimer() {
+    let remainingTime = Math.max(0, this.levelEndTime - millis());
+    let remainingSeconds = Math.ceil(remainingTime / 1000); // Convert milliseconds to seconds
+
+    // Update HTML elements with level and timer info
+    this.levelDisplay.textContent = `Level: ${this.level}`;
+    this.timerDisplay.textContent = `Time Left: ${remainingSeconds}s`;
   }
 }
 
@@ -414,8 +445,18 @@ function setup() {
 function draw() {
   background(220);
   image(video, 0, 0, width, (width * video.height) / video.width);
+
+  // Update game system to manage levels and timers
+  game.update();
+
+  // Detect face and handle alerts
   tracker.detect();
   tracker.drawAlerts();
   game.drawAlerts();
+
+  // Play ball game
   ballgame.playBall();
+
+  // Display the current level and timer
+  game.drawLevelAndTimer();
 }
