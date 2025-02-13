@@ -383,7 +383,7 @@ class GameSystem {
   updateScoreBar() {
     let progress = (this.score / this.maxScore) * 100;
     this.scoreBar.style.width = progress + "%";
-    this.scoreText.textContent = `Score: ${this.score} / ${this.maxScore}`;
+    this.scoreText.textContent = `${this.score} / ${this.maxScore}% unemployed`;
   }
 
   drawAlerts() {
@@ -407,7 +407,7 @@ class GameSystem {
     let remainingSeconds = Math.ceil(remainingTime / 1000); // Convert milliseconds to seconds
 
     // Update HTML elements with level and timer info
-    this.levelDisplay.textContent = `Level: ${this.level}`;
+    this.levelDisplay.textContent = `Shift: ${this.level}`;
     this.timerDisplay.textContent = `Time Left: ${remainingSeconds}s`;
   }
 }
