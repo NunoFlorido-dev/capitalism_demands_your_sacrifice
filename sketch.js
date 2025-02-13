@@ -113,6 +113,9 @@ class FaceTracker {
       } else {
         this.faceUpStartTime = null;
       }
+
+      // Eye gaze tracking
+      this.eyeGazeTracking(face);
     } else {
       // Face is off-screen
       if (this.faceOffScreenStartTime === null) {
@@ -141,26 +144,6 @@ class FaceTracker {
       rect(0, 0, width, height);
 
       textFont(this.warningFont);
-
-      // Apply transparency to the image
-      tint(255, this.alertOpacity + 125);
-      image(
-        this.warningAsset,
-        width / 2 - 550 / 2,
-        height / 2 - 335 / 2,
-        550,
-        335
-      );
-      fill(255, 255, 0, this.alertOpacity + 125);
-      textAlign(CENTER, CENTER);
-      if (this.alertTriggeredOffScreen) {
-        textSize(20);
-        text(this.alertTriggeredOffScreen, width / 2, height / 2 + 123);
-      } else if (this.alertTriggeredOnScreen) {
-        textSize(24);
-        text(this.alertTriggeredOnScreen, width / 2, height / 2 + 123);
-      }
-      noTint(); // Reset tint to prevent affecting other images
     }
   }
 
@@ -201,11 +184,33 @@ class FaceTracker {
     let chinY = face.keypoints[152].y * height;
     return noseY < foreheadY - (chinY - foreheadY) * 0.4;
   }
+
+  eyeGazeTracking(face) {
+    // Get pupil positions
+    let leftPupil = face.keypoints[159];
+    let rightPupil = face.keypoints[386];
+
+    if (leftPupil && rightPupil) {
+      // Estimate gaze direction
+      let gazeX = (leftPupil.x + rightPupil.x) / 2;
+      let gazeY = (leftPupil.y + rightPupil.y) / 2;
+
+      fill(0, 255, 0);
+      textSize(16);
+      text(`Gaze at: ${gazeX.toFixed(2)}, ${gazeY.toFixed(2)}`, 10, 20);
+
+      fill(0, 0, 255);
+      circle(gazeX.toFixed(2), gazeY.toFixed(2), 20);
+    } else {
+      console.error("Left or right pupil data is missing");
+    }
+  }
 }
 
 let faceMesh;
 let tracker;
 let video;
+let gestures;
 
 function preload() {
   faceMesh = ml5.faceMesh({
@@ -215,13 +220,30 @@ function preload() {
   });
 }
 
+function faceReady() {
+  faceApi.detect(gotFaces);
+}
+
+function gotFaces(error, result) {
+  if (error) {
+    console.log(error);
+    return;
+  }
+  detections = result;
+  faceApi.detect(gotFaces);
+}
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
   video = createCapture(VIDEO, { flipped: true });
   video.size(width, height);
   video.hide();
   tracker = new FaceTracker(video);
-  faceMesh.detectStart(video, (results) => tracker.updateFaces(results));
+
+  // Start detecting faces and pass results to both tracker and gestures
+  faceMesh.detectStart(video, (results) => {
+    tracker.updateFaces(results);
+  });
 }
 
 function draw() {
