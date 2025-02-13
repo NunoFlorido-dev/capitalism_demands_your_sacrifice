@@ -15,7 +15,7 @@ class FaceTracker {
     this.faceOffScreenStartTime = null;
 
     // Thresholds
-    this.durationThresholdOnScreen = 2000; // 2s
+    this.durationThresholdOnScreen = 3000; // 3s
     this.durationThresholdOffScreen = 4000; // 4s
   }
 
@@ -127,7 +127,7 @@ class FaceTracker {
       ) {
         this.alertTriggeredOffScreen =
           "YOU MAY ONLY LEAVE WHEN THE WORK IS DONE!";
-        this.game.addPenaltyAlert(5); // More points for leaving screen
+        this.game.addPenaltyAlert(4); // More points for leaving screen
       }
     }
 
@@ -302,7 +302,7 @@ class GameSystem {
 
     // Penalty Time
     this.penaltyTimeAlert = 1000;
-    this.penaltyTimeGame = 3000;
+    this.penaltyTimeGame = 4000;
 
     // Alert opacity for red screen
     this.alertOpacity = 0;
@@ -387,7 +387,7 @@ class GameSystem {
   updateScoreBar() {
     let progress = (this.score / this.maxScore) * 100;
     this.scoreBar.style.width = progress + "%";
-    this.scoreText.textContent = `${this.score} / ${this.maxScore}% unemployed`;
+    this.scoreText.textContent = `${this.score}% of ${this.maxScore}% unemployed`;
   }
 
   drawAlerts() {
