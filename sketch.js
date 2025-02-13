@@ -1,25 +1,22 @@
 class FaceTracker {
-  constructor(video) {
+  constructor(video, game) {
     this.video = video;
+    this.game = game; // Add reference to GameSystem
     this.faces = [];
-    this.alertOpacity = 0;
     this.alertTriggeredOnScreen = false;
     this.alertTriggeredOffScreen = false;
+    this.alertOpacity = 0; // Initialize alert opacity
 
-    // Timers for tracking various conditions
+    // Timers
     this.eyesClosedStartTime = null;
     this.faceTurnedStartTime = null;
     this.faceDownStartTime = null;
     this.faceUpStartTime = null;
     this.faceOffScreenStartTime = null;
 
-    // Duration thresholds for alerts
-    this.durationThresholdOnScreen = 2000; // 2 seconds
-    this.durationThresholdOffScreen = 4000; // 4 seconds
-
-    // Load warning image
-    this.warningAsset = loadImage("./assets/warning/warning.jpg");
-    this.warningFont = loadFont("./assets/fonts/PPFraktionMono-Bold.otf");
+    // Thresholds
+    this.durationThresholdOnScreen = 2000; // 2s
+    this.durationThresholdOffScreen = 4000; // 4s
   }
 
   updateFaces(results) {
@@ -67,13 +64,14 @@ class FaceTracker {
           this.durationThresholdOnScreen
         ) {
           this.alertTriggeredOnScreen = "SLEEPY WORKER, WAKE UP!";
+          this.game.addScore(2); // Add points for alert
         }
       } else {
         this.eyesClosedStartTime = null;
       }
 
       // Check if face is turned sideways
-      if (this.isFaceLookingSideways(face)) {
+      if (this.isFaceLookingSideways(face, box)) {
         if (this.faceTurnedStartTime === null) {
           this.faceTurnedStartTime = millis();
         } else if (
@@ -81,13 +79,14 @@ class FaceTracker {
           this.durationThresholdOnScreen
         ) {
           this.alertTriggeredOnScreen = "THE WORK IS ON THE COMPUTER, DUMMY!";
+          this.game.addScore(2); // Add points for alert
         }
       } else {
         this.faceTurnedStartTime = null;
       }
 
       // Check if face is looking down
-      if (this.isFaceLookingDown(face)) {
+      if (this.isFaceLookingDown(face, box)) {
         if (this.faceDownStartTime === null) {
           this.faceDownStartTime = millis();
         } else if (
@@ -95,13 +94,14 @@ class FaceTracker {
           this.durationThresholdOnScreen
         ) {
           this.alertTriggeredOnScreen = "STOP SCROLLING, GET WORKING!";
+          this.game.addScore(2); // Add points for alert
         }
       } else {
         this.faceDownStartTime = null;
       }
 
       // Check if face is looking up
-      if (this.isFaceLookingUp(face)) {
+      if (this.isFaceLookingUp(face, box)) {
         if (this.faceUpStartTime === null) {
           this.faceUpStartTime = millis();
         } else if (
@@ -109,13 +109,14 @@ class FaceTracker {
           this.durationThresholdOnScreen
         ) {
           this.alertTriggeredOnScreen = "BE FOCUSED AND RETURN TO WORK!";
+          this.game.addScore(2); // Add points for alert
         }
       } else {
         this.faceUpStartTime = null;
       }
 
       // Eye gaze tracking
-      this.eyeGazeTracking(face);
+      this.eyeGazeTracking(face, box);
     } else {
       // Face is off-screen
       if (this.faceOffScreenStartTime === null) {
@@ -126,6 +127,7 @@ class FaceTracker {
       ) {
         this.alertTriggeredOffScreen =
           "YOU MAY ONLY LEAVE WHEN THE WORK IS DONE!";
+        this.game.addScore(5); // More points for leaving screen
       }
     }
 
@@ -142,8 +144,6 @@ class FaceTracker {
     if (this.alertOpacity > 1) {
       fill(255, 0, 0, this.alertOpacity);
       rect(0, 0, width, height);
-
-      textFont(this.warningFont);
     }
   }
 
@@ -330,11 +330,10 @@ function setup() {
   video.size(width, height);
   video.hide();
 
-  tracker = new FaceTracker(video); // Create one tracker instance
-  ballgame = new FollowTheBall(tracker); // Pass it to FollowTheBall
-  game = new GameSystem(ballgame); // Create a game instance
+  game = new GameSystem(); // Create game instance
+  tracker = new FaceTracker(video, game); // Pass game to tracker
+  ballgame = new FollowTheBall(tracker);
 
-  // Start detecting faces and update tracker
   faceMesh.detectStart(video, (results) => {
     tracker.updateFaces(results);
   });
