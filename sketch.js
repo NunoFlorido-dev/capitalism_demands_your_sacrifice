@@ -225,6 +225,11 @@ class FollowTheBall {
     // Initial noise offset values for X and Y
     this.noiseOffsetX = random(1000);
     this.noiseOffsetY = random(1000);
+
+    this.moneyBatch = select("#money_batch"); // Select the image
+    if (this.moneyBatch) {
+      this.moneyBatch.style("position", "absolute");
+    }
   }
 
   moveBall() {
@@ -246,20 +251,19 @@ class FollowTheBall {
   }
 
   drawBall() {
-    noStroke();
     if (this.getCircleProximity()) {
-      this.ballColor = this.ballColorAccept;
+      this.moneyBatch.style("filter", "none");
     } else {
-      this.ballColor = this.ballColorNormal;
+      this.moneyBatch.style(
+        "filter",
+        "hue-rotate(-60deg) saturate(3) brightness(1)"
+      );
     }
-    fill(
-      this.ballColor.levels[0],
-      this.ballColor.levels[1],
-      this.ballColor.levels[2],
-      200
-    );
-    circle(this.ballX, this.ballY, 75);
-    noTint();
+    if (this.moneyBatch) {
+      this.moneyBatch.style("left", this.ballX + "px");
+      this.moneyBatch.style("top", this.ballY + "px");
+      this.moneyBatch.style("transform", "translate(-50%, -50%)");
+    }
   }
 
   // Get the distance between the eye gaze and the ball
@@ -276,7 +280,7 @@ class FollowTheBall {
 
     let distance = this.getDistance(this.ballX, this.ballY, gazeX, gazeY);
 
-    return distance <= 35;
+    return distance <= 40;
   }
 
   playBall() {
