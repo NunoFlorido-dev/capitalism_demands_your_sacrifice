@@ -8,4 +8,9 @@ html, body {
   canvas {
     display: block;
   }
+
+  @font-face {
+    font-family: "OT Neue Montreal Medium Extra";
+    src: url(./assets/fonts/OTNeueMontreal-MediumExtraSqueezed.woff);
+  }
   

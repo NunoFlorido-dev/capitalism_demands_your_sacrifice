@@ -201,14 +201,6 @@ class FaceTracker {
       this.gazeX = (leftPupil.x + rightPupil.x) / 2;
       this.gazeY = (leftPupil.y + rightPupil.y) / 2;
 
-      fill(0, 255, 0);
-      textSize(16);
-      text(
-        `Gaze at: ${this.gazeX.toFixed(2)}, ${this.gazeY.toFixed(2)}`,
-        10,
-        20
-      );
-
       fill(0, 0, 255);
       circle(this.gazeX, this.gazeY, 20); // Draw gaze location on screen
     } else {
@@ -288,11 +280,41 @@ class FollowTheBall {
   }
 }
 
+class GameSystem {
+  constructor(ballgame) {
+    this.ballgame = ballgame;
+    this.level = 1;
+    this.score = 0;
+    this.maxScore = 100;
+
+    // Get UI elements
+    this.scoreBar = document.getElementById("scoreBar");
+    this.scoreText = document.getElementById("scoreText");
+  }
+
+  addScore(points) {
+    this.score = Math.min(this.score + points, this.maxScore);
+    this.updateScoreBar();
+  }
+
+  resetScore() {
+    this.score = 0;
+    this.updateScoreBar();
+  }
+
+  updateScoreBar() {
+    let progress = (this.score / this.maxScore) * 100;
+    this.scoreBar.style.width = progress + "%";
+    this.scoreText.textContent = `Score: ${this.score} / ${this.maxScore}`;
+  }
+}
+
 let faceMesh;
 let tracker;
 let video;
 let gestures;
 let ballgame;
+let game;
 
 function preload() {
   faceMesh = ml5.faceMesh({
@@ -310,6 +332,7 @@ function setup() {
 
   tracker = new FaceTracker(video); // Create one tracker instance
   ballgame = new FollowTheBall(tracker); // Pass it to FollowTheBall
+  game = new GameSystem(ballgame); // Create a game instance
 
   // Start detecting faces and update tracker
   faceMesh.detectStart(video, (results) => {
