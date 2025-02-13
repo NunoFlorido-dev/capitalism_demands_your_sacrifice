@@ -27,7 +27,7 @@ canvas {
 .score-bar {
   height: 100%;
   width: 0%;
-  background-color: #75e368;
+  background-color: #f0d946;
   transition: width 0.3s ease-in-out;
 }
 

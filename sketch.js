@@ -64,7 +64,7 @@ class FaceTracker {
           this.durationThresholdOnScreen
         ) {
           this.alertTriggeredOnScreen = "SLEEPY WORKER, WAKE UP!";
-          this.game.addScore(2); // Add points for alert
+          this.game.addPenaltyAlert(2); // Add points for alert
         }
       } else {
         this.eyesClosedStartTime = null;
@@ -79,7 +79,7 @@ class FaceTracker {
           this.durationThresholdOnScreen
         ) {
           this.alertTriggeredOnScreen = "THE WORK IS ON THE COMPUTER, DUMMY!";
-          this.game.addScore(2); // Add points for alert
+          this.game.addPenaltyAlert(2); // Add points for alert
         }
       } else {
         this.faceTurnedStartTime = null;
@@ -94,7 +94,7 @@ class FaceTracker {
           this.durationThresholdOnScreen
         ) {
           this.alertTriggeredOnScreen = "STOP SCROLLING, GET WORKING!";
-          this.game.addScore(2); // Add points for alert
+          this.game.addPenaltyAlert(2); // Add points for alert
         }
       } else {
         this.faceDownStartTime = null;
@@ -109,7 +109,7 @@ class FaceTracker {
           this.durationThresholdOnScreen
         ) {
           this.alertTriggeredOnScreen = "BE FOCUSED AND RETURN TO WORK!";
-          this.game.addScore(2); // Add points for alert
+          this.game.addPenaltyAlert(2); // Add points for alert
         }
       } else {
         this.faceUpStartTime = null;
@@ -127,7 +127,7 @@ class FaceTracker {
       ) {
         this.alertTriggeredOffScreen =
           "YOU MAY ONLY LEAVE WHEN THE WORK IS DONE!";
-        this.game.addScore(5); // More points for leaving screen
+        this.game.addPenaltyAlert(5); // More points for leaving screen
       }
     }
 
@@ -212,8 +212,10 @@ class FaceTracker {
 }
 
 class FollowTheBall {
-  constructor(faceTracker) {
+  constructor(faceTracker, game) {
     this.faceTracker = faceTracker; // Use the existing face tracker
+
+    this.game = game;
 
     this.ballX = width / 2;
     this.ballY = height / 2;
@@ -274,18 +276,30 @@ class FollowTheBall {
     let gazeY = gazeData[1];
 
     let distance = this.getDistance(this.ballX, this.ballY, gazeX, gazeY);
-    console.log("Distance to Ball: ", distance);
 
     return distance <= 27.5;
+  }
+
+  playBall() {
+    this.moveBall();
+    this.drawBall();
+
+    if (!this.getCircleProximity()) {
+      this.game.addPenaltyGame(3);
+    }
   }
 }
 
 class GameSystem {
-  constructor(ballgame) {
-    this.ballgame = ballgame;
+  constructor() {
     this.level = 1;
     this.score = 0;
     this.maxScore = 100;
+    this.lastPenaltyTime = 0; // Store last penalty time
+
+    // Penalty Time
+    this.penaltyTimeAlert = 1000;
+    this.penaltyTimeGame = 3000;
 
     // Get UI elements
     this.scoreBar = document.getElementById("scoreBar");
@@ -295,6 +309,36 @@ class GameSystem {
   addScore(points) {
     this.score = Math.min(this.score + points, this.maxScore);
     this.updateScoreBar();
+  }
+
+  addPenaltyAlert(points) {
+    let currentTime = millis();
+    console.log("Current Time: " + currentTime); // Log the current time
+    console.log("Last Penalty Time: " + this.lastPenaltyTime); // Log the last penalty time
+
+    if (currentTime - this.lastPenaltyTime >= this.penaltyTimeAlert) {
+      console.log("Penalty Applied: " + points); // Log the penalty points being deducted
+      this.score = Math.max(this.score + points, 0); // Prevent negative score
+      this.lastPenaltyTime = currentTime;
+      this.updateScoreBar();
+    } else {
+      console.log("Penalty not applied yet (cooldown in effect)"); // Log if penalty is skipped
+    }
+  }
+
+  addPenaltyGame(points) {
+    let currentTime = millis();
+    console.log("Current Time: " + currentTime); // Log the current time
+    console.log("Last Penalty Time: " + this.lastPenaltyTime); // Log the last penalty time
+
+    if (currentTime - this.lastPenaltyTime >= this.penaltyTimeGame) {
+      console.log("Penalty Applied: " + points); // Log the penalty points being deducted
+      this.score = Math.max(this.score + points, 0); // Prevent negative score
+      this.lastPenaltyTime = currentTime;
+      this.updateScoreBar();
+    } else {
+      console.log("Penalty not applied yet (cooldown in effect)"); // Log if penalty is skipped
+    }
   }
 
   resetScore() {
@@ -332,7 +376,7 @@ function setup() {
 
   game = new GameSystem(); // Create game instance
   tracker = new FaceTracker(video, game); // Pass game to tracker
-  ballgame = new FollowTheBall(tracker);
+  ballgame = new FollowTheBall(tracker, game); //Pass game and tracker to ball game
 
   faceMesh.detectStart(video, (results) => {
     tracker.updateFaces(results);
@@ -344,6 +388,5 @@ function draw() {
   image(video, 0, 0, width, (width * video.height) / video.width);
   tracker.detect();
   tracker.drawAlerts();
-  ballgame.moveBall();
-  ballgame.drawBall();
+  ballgame.playBall();
 }
