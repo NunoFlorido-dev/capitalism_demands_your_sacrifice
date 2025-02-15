@@ -417,6 +417,10 @@ class GameSystem {
 }
 
 let faceMesh;
+
+let classifier;
+let predictedWord = "";
+
 let tracker;
 let video;
 let gestures;
@@ -429,6 +433,12 @@ function preload() {
     refineLandmarks: false,
     flipped: true,
   });
+
+  let soundOptions = { probabilityThreshold: 0.7 };
+  classifier = ml5.soundClassifier(
+    "https://teachablemachine.withgoogle.com/models/G0IVurZaU/",
+    soundOptions
+  );
 }
 
 function setup() {
@@ -437,30 +447,38 @@ function setup() {
   video.size(width, height);
   video.hide();
 
-  game = new GameSystem(); // Create game instance
-  tracker = new FaceTracker(video, game); // Pass game to tracker
-  ballgame = new FollowTheBall(tracker, game); //Pass game and tracker to ball game
+  game = new GameSystem();
+  tracker = new FaceTracker(video, game);
+  ballgame = new FollowTheBall(tracker, game);
 
   faceMesh.detectStart(video, (results) => {
     tracker.updateFaces(results);
   });
+
+  classifier.classifyStart(gotResult);
+}
+
+// A function to run when we get any errors and the results
+function gotResult(results) {
+  // The results are in an array ordered by confidence
+  console.log(results);
+
+  predictedWord = results[0].label;
 }
 
 function draw() {
   background(220);
   image(video, 0, 0, width, (width * video.height) / video.width);
 
-  // Update game system to manage levels and timers
   game.update();
-
-  // Detect face and handle alerts
   tracker.detect();
   tracker.drawAlerts();
   game.drawAlerts();
-
-  // Play ball game
   ballgame.playBall();
-
-  // Display the current level and timer
   game.drawLevelAndTimer();
+
+  fill("#f0d946");
+  textAlign(CENTER, CENTER);
+  textSize(64);
+  text(predictedWord, width / 2, height / 2);
 }
