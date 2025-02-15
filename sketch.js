@@ -293,6 +293,104 @@ class FollowTheBall {
   }
 }
 
+class SayTheWords {
+  constructor(soundClassifier, game) {
+    this.soundClassifier = soundClassifier;
+    this.game = game;
+
+    this.wordContainer = document.createElement("div");
+    this.wordContainer.id = "word_container";
+
+    this.wordDisplay = document.createElement("p");
+    this.wordDisplay.id = "word_display";
+
+    document.body.appendChild(this.wordContainer);
+    this.wordContainer.appendChild(this.wordDisplay);
+
+    this.wordArray = [
+      "Boss",
+      "Work",
+      "Coworker",
+      "Shareholder",
+      "Profit",
+      "Company",
+      "BABJEEBZIGUAAA",
+      "DORRREEEEPSIAA",
+      "GUPTLOOOOTZAA",
+      "CRRPSOOOBCHIA",
+    ];
+
+    this.currentWord = "";
+    this.wordTimeout = null;
+    this.listenTimeout = null;
+    this.waitTime = 4000; // 4 sec before showing a new word
+    this.listenTime = 2000; // 2 sec to say the word
+    this.isListening = false;
+  }
+
+  /** Starts the loop to show words based on timers */
+  startWordChallenge() {
+    this.scheduleNextWord();
+  }
+
+  /** Schedules the next word after waitTime */
+  scheduleNextWord() {
+    clearTimeout(this.wordTimeout);
+    this.wordTimeout = setTimeout(() => this.pickRandomWord(), this.waitTime);
+  }
+
+  /** Picks and displays a new word */
+  pickRandomWord() {
+    let wordsToUse =
+      this.game.level === 5
+        ? this.wordArray.slice(-4)
+        : this.wordArray.slice(0, -4);
+
+    let newWord;
+
+    do {
+      newWord = wordsToUse[Math.floor(Math.random() * wordsToUse.length)];
+    } while (newWord === this.currentWord); // Keep choosing until it's different
+
+    this.currentWord = newWord;
+    this.wordDisplay.textContent = this.currentWord;
+    this.wordDisplay.style.color = "#f0d946";
+    this.isListening = true;
+
+    // Start listen timer
+    clearTimeout(this.listenTimeout);
+    this.listenTimeout = setTimeout(
+      () => this.evaluateWord(false),
+      this.listenTime
+    );
+  }
+
+  evaluateWord(correct) {
+    this.isListening = false;
+
+    if (correct) {
+      clearTimeout(this.listenTimeout); // Prevents late penalty!
+      this.wordDisplay.style.color = "#15eb4e";
+    } else {
+      this.wordDisplay.style.color = "#ed221f";
+      this.game.addPenaltyGame(5); // Deduct points for wrong answer
+    }
+
+    this.scheduleNextWord();
+  }
+
+  /** Checks if the predicted word is correct */
+  displayWord(predictedWord) {
+    if (
+      this.isListening &&
+      predictedWord.toLowerCase().trim() ===
+        this.currentWord.toLowerCase().trim()
+    ) {
+      this.evaluateWord(true);
+    }
+  }
+}
+
 class GameSystem {
   constructor() {
     this.level = 1;
@@ -341,6 +439,8 @@ class GameSystem {
       // Update the ball speed multiplier based on the level
       if (this.level === 1) {
         this.ballSpeedMultiplier = 1;
+      } else if (this.level === 2) {
+        wordgame.startWordChallenge();
       } else if (this.level === 3) {
         this.ballSpeedMultiplier = 10;
       } else if (this.level === 5) {
@@ -425,6 +525,7 @@ let tracker;
 let video;
 let gestures;
 let ballgame;
+let wordgame;
 let game;
 
 function preload() {
@@ -434,9 +535,9 @@ function preload() {
     flipped: true,
   });
 
-  let soundOptions = { probabilityThreshold: 0.7 };
+  let soundOptions = { probabilityThreshold: 0, overlapFactor: 0.5 };
   classifier = ml5.soundClassifier(
-    "https://teachablemachine.withgoogle.com/models/G0IVurZaU/",
+    "https://teachablemachine.withgoogle.com/models/bE_DNF6Y3/",
     soundOptions
   );
 }
@@ -450,6 +551,7 @@ function setup() {
   game = new GameSystem();
   tracker = new FaceTracker(video, game);
   ballgame = new FollowTheBall(tracker, game);
+  wordgame = new SayTheWords(classifier, game);
 
   faceMesh.detectStart(video, (results) => {
     tracker.updateFaces(results);
@@ -475,10 +577,6 @@ function draw() {
   tracker.drawAlerts();
   game.drawAlerts();
   ballgame.playBall();
+  wordgame.displayWord(predictedWord); // This listens for speech
   game.drawLevelAndTimer();
-
-  fill("#f0d946");
-  textAlign(CENTER, CENTER);
-  textSize(64);
-  text(predictedWord, width / 2, height / 2);
 }
