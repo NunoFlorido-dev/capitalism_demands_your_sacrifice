@@ -105,7 +105,7 @@ canvas {
   font-size: 6rem;
 }
 
-#waste_basket, #email, #outbox_tray{
+#waste_basket, #email, #outbox_tray, #white_flag{
   display: none;
   position: absolute;
   width: 80px;
@@ -116,7 +116,7 @@ canvas {
   z-index: 2;
 }
 
-#waste_basket img, #email img, #outbox_tray img{
+#waste_basket img, #email img, #outbox_tray img, #white_flag img{
   width: 100%;
   height: 100%;
 }

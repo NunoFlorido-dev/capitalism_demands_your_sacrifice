@@ -211,6 +211,8 @@ class FaceTracker {
   }
 }
 
+/* **************************************************************************************** */
+
 class FollowTheBall {
   constructor(faceTracker, game) {
     this.faceTracker = faceTracker; // Use the existing face tracker
@@ -392,6 +394,7 @@ class SayTheWords {
 }
 
 /* **************************************************************************************** */
+
 class TrashTheMails {
   constructor(game) {
     this.game = game;
@@ -399,6 +402,7 @@ class TrashTheMails {
     this.mail = select("#email");
     this.trash = select("#waste_basket");
     this.outbox = select("#outbox_tray");
+    this.flag = select("#white_flag");
     this.isDragging = false;
     this.mailX = 0;
     this.mailY = 0;
