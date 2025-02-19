@@ -41,6 +41,7 @@ class FaceTracker {
         this.faceOffScreenStartTime = null;
       }
 
+      /*
       // Draw bounding box (REMOVE LATER)
       noFill();
       stroke(0, 0, 255);
@@ -54,6 +55,8 @@ class FaceTracker {
         noStroke();
         circle(keypoint.x, keypoint.y, 5);
       }
+
+      */
 
       // Check for closed eyes
       if (this.eyeCloseTracking(face, box)) {
@@ -398,14 +401,20 @@ class SayTheWords {
 class TrashTheMails {
   constructor(game) {
     this.game = game;
-
-    this.mail = select("#email");
-    this.outbox = select("#outbox_tray");
+    this.mail = select("#email"); // This is still a p5.js object
+    this.outbox = select("#outbox_tray"); // This is still a p5.js object
     this.item = this.mail;
     this.dragging = false;
     this.timerId = null; // Track the timeout for penalty
+    this.level = this.game.level;
+
+    this.time = 5000;
+
+    this.mail.style("display", "block");
+    this.outbox.style("display", "block");
 
     this.initDrag();
+    this.changeTime();
   }
 
   // Initialize drag events for mail
@@ -492,6 +501,14 @@ class TrashTheMails {
     element.style("top", `${y}px`);
   }
 
+  changeTime() {
+    if (this.level >= 3 && this.level < 5) {
+      this.time = 5000;
+    } else if (this.level >= 5) {
+      this.time = 2000;
+    }
+  }
+
   timer() {
     this.setRandomPositions();
     if (this.timerId) clearTimeout(this.timerId);
@@ -500,7 +517,7 @@ class TrashTheMails {
       console.log("Time ran out! Penalty applied.");
       this.game.addPenaltyGame(4);
       this.restartChallenge();
-    }, 5000);
+    }, this.time);
   }
 
   restartChallenge() {
@@ -567,6 +584,9 @@ class GameSystem {
       } else if (this.level === 2) {
         wordgame.startWordChallenge();
       } else if (this.level === 3) {
+        mailgame.mail.style("display", "block");
+        mailgame.outbox.style("display", "block");
+        mailgame.playChallenge();
         this.ballSpeedMultiplier = 10;
       } else if (this.level === 5) {
         this.ballSpeedMultiplier = 20;
@@ -682,13 +702,14 @@ function setup() {
   wordgame = new SayTheWords(classifier, game);
   mailgame = new TrashTheMails(game);
 
+  mailgame.mail.style("display", "none");
+  mailgame.outbox.style("display", "none");
+
   faceMesh.detectStart(video, (results) => {
     tracker.updateFaces(results);
   });
 
   classifier.classifyStart(gotResult);
-
-  mailgame.playChallenge();
 }
 
 // A function to run when we get any errors and the results
@@ -707,7 +728,7 @@ function draw() {
   tracker.detect();
   tracker.drawAlerts();
   game.drawAlerts();
-  // ballgame.playBall();
-  // wordgame.displayWord(predictedWord);
+  ballgame.playBall();
+  wordgame.displayWord(predictedWord);
   game.drawLevelAndTimer();
 }
