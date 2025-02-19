@@ -488,12 +488,20 @@ class TrashTheMails {
     }
   }
 
+  // Timer function that resets and includes the penalty
   timer() {
     this.setRandomPositions();
     if (this.interval) clearInterval(this.interval);
+
+    // Add penalty when the timer restarts
+    this.game.addPenaltyGame(5); // Penalty is applied every time the challenge resets
+
     this.interval = setInterval(() => {
       this.chooseRandomItem();
       this.setRandomPositions();
+
+      // Add penalty on every timer reset (can adjust this logic if necessary)
+      this.game.addPenaltyGame(5); // Apply penalty for each reset (optional)
     }, 5000); // Reposition every 5 seconds
   }
 
