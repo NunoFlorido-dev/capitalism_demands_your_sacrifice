@@ -116,6 +116,10 @@ canvas {
   z-index: 2;
 }
 
+#email, #white_flag{
+  z-index: 3;
+}
+
 #waste_basket img, #email img, #outbox_tray img, #white_flag img{
   width: 100%;
   height: 100%;
