@@ -1,5 +1,5 @@
 class FaceTracker {
-  constructor(video, game) {
+  constructor(video, game, beep) {
     this.video = video;
     this.game = game; // Add reference to GameSystem
     this.faces = [];
@@ -15,8 +15,10 @@ class FaceTracker {
     this.faceOffScreenStartTime = null;
 
     // Thresholds
-    this.durationThresholdOnScreen = 3000; // 3s
+    this.durationThresholdOnScreen = 1500; // 1.5s
     this.durationThresholdOffScreen = 4000; // 4s
+
+    this.beep = beep;
   }
 
   updateFaces(results) {
@@ -67,6 +69,7 @@ class FaceTracker {
           this.durationThresholdOnScreen
         ) {
           this.alertTriggeredOnScreen = "SLEEPY WORKER, WAKE UP!";
+          this.beep.play();
           this.game.addPenaltyAlert(2); // Add points for alert
         }
       } else {
@@ -82,6 +85,7 @@ class FaceTracker {
           this.durationThresholdOnScreen
         ) {
           this.alertTriggeredOnScreen = "THE WORK IS ON THE COMPUTER, DUMMY!";
+          this.beep.play();
           this.game.addPenaltyAlert(2); // Add points for alert
         }
       } else {
@@ -97,6 +101,7 @@ class FaceTracker {
           this.durationThresholdOnScreen
         ) {
           this.alertTriggeredOnScreen = "STOP SCROLLING, GET WORKING!";
+          this.beep.play();
           this.game.addPenaltyAlert(2); // Add points for alert
         }
       } else {
@@ -112,6 +117,7 @@ class FaceTracker {
           this.durationThresholdOnScreen
         ) {
           this.alertTriggeredOnScreen = "BE FOCUSED AND RETURN TO WORK!";
+          this.beep.play();
           this.game.addPenaltyAlert(2); // Add points for alert
         }
       } else {
@@ -130,6 +136,7 @@ class FaceTracker {
       ) {
         this.alertTriggeredOffScreen =
           "YOU MAY ONLY LEAVE WHEN THE WORK IS DONE!";
+        this.beep.play();
         this.game.addPenaltyAlert(4); // More points for leaving screen
       }
     }
@@ -204,7 +211,8 @@ class FaceTracker {
       this.gazeX = (leftPupil.x + rightPupil.x) / 2;
       this.gazeY = (leftPupil.y + rightPupil.y) / 2;
 
-      fill(0, 0, 255);
+      fill("#317cf5");
+      noStroke();
       circle(this.gazeX, this.gazeY, 20); // Draw gaze location on screen
     } else {
       console.error("Left or right pupil data is missing");
@@ -299,7 +307,7 @@ class FollowTheBall {
 }
 
 class SayTheWords {
-  constructor(soundClassifier, game) {
+  constructor(soundClassifier, game, beep) {
     this.soundClassifier = soundClassifier;
     this.game = game;
 
@@ -331,6 +339,7 @@ class SayTheWords {
     this.waitTime = 4000; // 4 sec before showing a new word
     this.listenTime = 2000; // 2 sec to say the word
     this.isListening = false;
+    this.beep = beep;
   }
 
   /** Starts the loop to show words based on timers */
@@ -359,7 +368,7 @@ class SayTheWords {
 
     this.currentWord = newWord;
     this.wordDisplay.textContent = this.currentWord;
-    this.wordDisplay.style.color = "#f0d946";
+    this.wordDisplay.style.color = "#317cf5";
     this.isListening = true;
 
     // Start listen timer
@@ -378,6 +387,7 @@ class SayTheWords {
       this.wordDisplay.style.color = "#15eb4e";
     } else {
       this.wordDisplay.style.color = "#ed221f";
+      this.beep.play();
       this.game.addPenaltyGame(5); // Deduct points for wrong answer
     }
 
@@ -399,7 +409,7 @@ class SayTheWords {
 /* **************************************************************************************** */
 
 class TrashTheMails {
-  constructor(game) {
+  constructor(game, beep) {
     this.game = game;
     this.mail = select("#email"); // This is still a p5.js object
     this.outbox = select("#outbox_tray"); // This is still a p5.js object
@@ -408,13 +418,15 @@ class TrashTheMails {
     this.timerId = null; // Track the timeout for penalty
     this.level = this.game.level;
 
+    this.changeTime();
     this.time = 5000;
 
     this.mail.style("display", "block");
     this.outbox.style("display", "block");
 
     this.initDrag();
-    this.changeTime();
+
+    this.beep = beep;
   }
 
   // Initialize drag events for mail
@@ -515,6 +527,7 @@ class TrashTheMails {
 
     this.timerId = setTimeout(() => {
       console.log("Time ran out! Penalty applied.");
+      this.beep.play();
       this.game.addPenaltyGame(4);
       this.restartChallenge();
     }, this.time);
@@ -534,7 +547,7 @@ class TrashTheMails {
 /* **************************************************************************************** */
 
 class GameSystem {
-  constructor() {
+  constructor(beep) {
     this.level = 1;
     this.score = 0;
     this.maxScore = 100;
@@ -564,6 +577,8 @@ class GameSystem {
 
     // Ball speed modifier based on level
     this.ballSpeedMultiplier = 1;
+
+    this.beep = beep;
   }
 
   update() {
@@ -616,6 +631,8 @@ class GameSystem {
       this.updateScoreBar();
 
       // Trigger the red screen alert for penalty
+      this.beep.play();
+
       this.triggerRedAlert();
     }
   }
@@ -668,6 +685,8 @@ let faceMesh;
 let classifier;
 let predictedWord = "";
 
+let wrongSound;
+
 let tracker;
 let video;
 let gestures;
@@ -688,6 +707,8 @@ function preload() {
     "https://teachablemachine.withgoogle.com/models/bE_DNF6Y3/",
     soundOptions
   );
+
+  wrongSound = loadSound("./assets/sound/buzzer-or-wrong-answer-20582.mp3");
 }
 
 function setup() {
@@ -696,11 +717,11 @@ function setup() {
   video.size(width, height);
   video.hide();
 
-  game = new GameSystem();
-  tracker = new FaceTracker(video, game);
+  game = new GameSystem(wrongSound);
+  tracker = new FaceTracker(video, game, wrongSound);
   ballgame = new FollowTheBall(tracker, game);
-  wordgame = new SayTheWords(classifier, game);
-  mailgame = new TrashTheMails(game);
+  wordgame = new SayTheWords(classifier, game, wrongSound);
+  mailgame = new TrashTheMails(game, wrongSound);
 
   mailgame.mail.style("display", "none");
   mailgame.outbox.style("display", "none");
@@ -720,15 +741,21 @@ function gotResult(results) {
   predictedWord = results[0].label;
 }
 
-function draw() {
-  background(220);
-  image(video, 0, 0, width, (width * video.height) / video.width);
-
-  game.update();
+function startGame() {
+  if (millis() >= 3000) {
+    game.update();
+  }
   tracker.detect();
   tracker.drawAlerts();
   game.drawAlerts();
   ballgame.playBall();
   wordgame.displayWord(predictedWord);
   game.drawLevelAndTimer();
+}
+
+function draw() {
+  background(220);
+  image(video, 0, 0, width, (width * video.height) / video.width);
+
+  startGame();
 }
