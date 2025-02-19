@@ -118,6 +118,7 @@ canvas {
 
 #email, #white_flag{
   z-index: 3;
+  cursor: pointer;
 }
 
 #waste_basket img, #email img, #outbox_tray img, #white_flag img{

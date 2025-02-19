@@ -400,143 +400,105 @@ class TrashTheMails {
     this.game = game;
 
     this.mail = select("#email");
-    this.trash = select("#waste_basket");
-    this.outbox = select("#outbox_tray");
     this.flag = select("#white_flag");
-    this.isDragging = false;
-    this.mailX = 0;
-    this.mailY = 0;
-    this.trashX = 0;
-    this.trashY = 0;
-    this.outboxX = 0;
-    this.outboxY = 0;
-    this.timer = 5000; // Time limit in milliseconds (5 seconds)
-    this.timerStart = 0; // Store the start time of the timer
-    this.timerActive = false;
+    this.outbox = select("#outbox_tray");
+    this.trash = select("#waste_basket");
 
-    this.setRandomPositions(); // Randomize positions
-    this.setupMailDrag();
+    this.item = this.mail;
+    this.interval = null;
 
-    this.startTimer(); // Start the timer when the game begins
+    this.initDrag();
   }
 
-  setRandomPositions() {
-    let minDistance = 150; // Minimum distance between objects
-
-    // Function to generate a random position
-    const getRandomPosition = () => ({
-      x: random(50, windowWidth - 150),
-      y: random(50, windowHeight - 150),
+  // Initialize drag events for both mail and flag
+  initDrag() {
+    [this.mail, this.flag].forEach((obj) => {
+      obj.mousePressed((e) => this.startDrag(e, obj));
+      obj.mouseReleased(() => this.stopDrag());
     });
 
-    let positions = [];
-
-    // Ensure positions are far enough apart
-    while (positions.length < 3) {
-      let pos = getRandomPosition();
-      let isTooClose = positions.some(
-        (p) => dist(pos.x, pos.y, p.x, p.y) < minDistance
-      );
-
-      if (!isTooClose) positions.push(pos);
-    }
-
-    // Assign the positions
-    [this.mailX, this.mailY] = [positions[0].x, positions[0].y];
-    [this.trashX, this.trashY] = [positions[1].x, positions[1].y];
-    [this.outboxX, this.outboxY] = [positions[2].x, positions[2].y];
-
-    // Apply styles
-    this.positionElement(this.mail, this.mailX, this.mailY);
-    this.positionElement(this.trash, this.trashX, this.trashY);
-    this.positionElement(this.outbox, this.outboxX, this.outboxY);
+    // Listen for global mouse movement
+    document.addEventListener("mousemove", (e) => this.drag(e));
   }
 
-  positionElement(element, x, y) {
+  startDrag(event, obj) {
+    this.dragging = true;
+    this.item = obj;
+    this.offsetX = event.clientX - this.item.position().x;
+    this.offsetY = event.clientY - this.item.position().y;
+  }
+
+  stopDrag() {
+    this.dragging = false;
+  }
+
+  drag(event) {
+    if (this.dragging) {
+      this.item.style("left", `${event.clientX - this.offsetX}px`);
+      this.item.style("top", `${event.clientY - this.offsetY}px`);
+    }
+  }
+
+  // Function to position the objects randomly
+  setRandomPositions() {
+    const objects = [this.item, this.outbox, this.trash];
+    const positions = [];
+    const minDistance = 100;
+
+    function getRandomPosition() {
+      return {
+        x: Math.random() * (window.innerWidth - 150),
+        y: Math.random() * (window.innerHeight - 150),
+      };
+    }
+
+    function isFarEnough(pos) {
+      return positions.every(
+        (p) => Math.hypot(pos.x - p.x, pos.y - p.y) > minDistance
+      );
+    }
+
+    objects.forEach((obj) => {
+      let pos;
+      do {
+        pos = getRandomPosition();
+      } while (!isFarEnough(pos));
+      positions.push(pos);
+      this.positionElements(obj, pos.x, pos.y);
+    });
+  }
+
+  // Position the element based on the calculated X, Y coordinates
+  positionElements(element, x, y) {
     element.style("position", "absolute");
     element.style("left", `${x}px`);
     element.style("top", `${y}px`);
   }
 
-  setupMailDrag() {
-    this.mail.elt.ondragstart = (e) => e.preventDefault();
-
-    this.mail.mousePressed(() => {
-      this.isDragging = true;
-    });
-
-    this.mail.mouseReleased(() => {
-      this.isDragging = false;
-      this.checkDrop();
-    });
-  }
-
-  dragMail() {
-    if (this.isDragging) {
-      this.mailX = mouseX - this.mail.width / 2;
-      this.mailY = mouseY - this.mail.height / 2;
-      this.positionElement(this.mail, this.mailX, this.mailY);
+  // Function to randomly choose mail or flag
+  chooseRandomItem() {
+    if (Math.random() < 0.5) {
+      this.item = this.mail;
+      this.mail.style("display", "block");
+      this.flag.style("display", "none");
+    } else {
+      this.item = this.flag;
+      this.flag.style("display", "block");
+      this.mail.style("display", "none");
     }
   }
 
-  checkDrop() {
-    let mailBounds = this.mail.elt.getBoundingClientRect();
-    let trashBounds = this.trash.elt.getBoundingClientRect();
-    let outboxBounds = this.outbox.elt.getBoundingClientRect();
-
-    // Check if mail is dropped on the trash can
-    if (this.isOverlapping(mailBounds, trashBounds)) {
-      console.log("Mail trashed!");
-      this.mail.hide(); // Hide the mail
-      this.resetChallenge(); // Reset positions and timer
-    }
-    // Check if mail is dropped on the outbox tray
-    else if (this.isOverlapping(mailBounds, outboxBounds)) {
-      console.log("Mail sent to outbox!");
-      this.mail.hide(); // Hide the mail
-      this.resetChallenge(); // Reset positions and timer
-    }
+  timer() {
+    this.setRandomPositions();
+    if (this.interval) clearInterval(this.interval);
+    this.interval = setInterval(() => {
+      this.chooseRandomItem();
+      this.setRandomPositions();
+    }, 5000); // Reposition every 5 seconds
   }
 
-  startTimer() {
-    this.timerActive = true;
-    this.timerStart = millis(); // Store the start time in milliseconds
-  }
-
-  resetChallenge() {
-    this.timerActive = false;
-    this.setRandomPositions(); // Randomize positions again
-    this.mail.show(); // Show the mail again
-    this.startTimer(); // Restart the timer after reset
-    this.displayTimer(); // Display timer reset
-  }
-
-  displayTimer() {
-    if (this.timerActive) {
-      let elapsedTime = millis() - this.timerStart; // Calculate elapsed time
-      let remainingTime = this.timer - elapsedTime; // Remaining time in milliseconds
-
-      // If time has expired
-      if (remainingTime <= 0) {
-        console.log("Time's up!");
-        this.mail.hide(); // Hide the mail if time runs out
-        this.resetChallenge(); // Reset challenge after time is up
-      }
-    }
-  }
-
-  isOverlapping(rect1, rect2) {
-    return !(
-      rect1.right < rect2.left ||
-      rect1.left > rect2.right ||
-      rect1.bottom < rect2.top ||
-      rect1.top > rect2.bottom
-    );
-  }
-
-  playMailChallenge() {
-    this.dragMail();
-    this.displayTimer(); // Continuously update the timer display
+  playChallenge() {
+    this.timer();
   }
 }
 
@@ -713,6 +675,8 @@ function setup() {
   });
 
   classifier.classifyStart(gotResult);
+
+  mailgame.playChallenge();
 }
 
 // A function to run when we get any errors and the results
@@ -732,7 +696,6 @@ function draw() {
   tracker.drawAlerts();
   game.drawAlerts();
   ballgame.playBall();
-  mailgame.playMailChallenge();
   wordgame.displayWord(predictedWord);
   game.drawLevelAndTimer();
 }
