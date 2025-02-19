@@ -400,48 +400,66 @@ class TrashTheMails {
     this.game = game;
 
     this.mail = select("#email");
-    this.flag = select("#white_flag");
     this.outbox = select("#outbox_tray");
-    this.trash = select("#waste_basket");
-
     this.item = this.mail;
-    this.interval = null;
+    this.dragging = false;
+    this.timerId = null; // Track the timeout for penalty
 
     this.initDrag();
   }
 
-  // Initialize drag events for both mail and flag
+  // Initialize drag events for mail
   initDrag() {
-    [this.mail, this.flag].forEach((obj) => {
-      obj.mousePressed((e) => this.startDrag(e, obj));
-      obj.mouseReleased(() => this.stopDrag());
-    });
-
-    // Listen for global mouse movement
+    this.mail.mousePressed((e) => this.startDrag(e));
+    this.mail.mouseReleased(() => this.stopDrag());
     document.addEventListener("mousemove", (e) => this.drag(e));
   }
 
-  startDrag(event, obj) {
+  startDrag(event) {
     this.dragging = true;
-    this.item = obj;
-    this.offsetX = event.clientX - this.item.position().x;
-    this.offsetY = event.clientY - this.item.position().y;
+    this.offsetX = event.clientX - this.mail.position().x;
+    this.offsetY = event.clientY - this.mail.position().y;
+
+    // Cancel the time-based penalty when the player starts moving the item
+    if (this.timerId) {
+      clearTimeout(this.timerId);
+      this.timerId = null;
+    }
   }
 
   stopDrag() {
     this.dragging = false;
+    const itemBounds = this.mail.elt.getBoundingClientRect();
+    const outboxBounds = this.outbox.elt.getBoundingClientRect();
+
+    console.log("Dragging stopped.");
+
+    if (this.isOverlapping(itemBounds, outboxBounds)) {
+      console.log("Dropped in OUTBOX.");
+      this.restartChallenge();
+    } else {
+      console.log("Item was not placed in the outbox.");
+    }
   }
 
   drag(event) {
     if (this.dragging) {
-      this.item.style("left", `${event.clientX - this.offsetX}px`);
-      this.item.style("top", `${event.clientY - this.offsetY}px`);
+      this.mail.style("left", `${event.clientX - this.offsetX}px`);
+      this.mail.style("top", `${event.clientY - this.offsetY}px`);
     }
   }
 
-  // Function to position the objects randomly
+  isOverlapping(rect1, rect2) {
+    return !(
+      rect1.right < rect2.left ||
+      rect1.left > rect2.right ||
+      rect1.bottom < rect2.top ||
+      rect1.top > rect2.bottom
+    );
+  }
+
   setRandomPositions() {
-    const objects = [this.item, this.outbox, this.trash];
+    const objects = [this.mail, this.outbox];
     const positions = [];
     const minDistance = 100;
 
@@ -468,37 +486,31 @@ class TrashTheMails {
     });
   }
 
-  // Position the element based on the calculated X, Y coordinates
   positionElements(element, x, y) {
     element.style("position", "absolute");
     element.style("left", `${x}px`);
     element.style("top", `${y}px`);
   }
 
-  // Function to randomly choose mail or flag
-  chooseRandomItem() {
-    if (Math.random() < 0.5) {
-      this.item = this.mail;
-      this.mail.style("display", "block");
-      this.flag.style("display", "none");
-    } else {
-      this.item = this.flag;
-      this.flag.style("display", "block");
-      this.mail.style("display", "none");
-    }
-  }
-
   timer() {
     this.setRandomPositions();
-    if (this.interval) clearInterval(this.interval);
-    this.interval = setInterval(() => {
-      this.chooseRandomItem();
-      this.setRandomPositions();
-    }, 5000); // Reposition every 5 seconds
+    if (this.timerId) clearTimeout(this.timerId);
+
+    this.timerId = setTimeout(() => {
+      console.log("Time ran out! Penalty applied.");
+      this.game.addPenaltyGame(4);
+      this.restartChallenge();
+    }, 5000);
+  }
+
+  restartChallenge() {
+    if (this.timerId) clearTimeout(this.timerId);
+    this.setRandomPositions();
+    this.timer();
   }
 
   playChallenge() {
-    this.timer();
+    this.restartChallenge();
   }
 }
 
@@ -695,7 +707,7 @@ function draw() {
   tracker.detect();
   tracker.drawAlerts();
   game.drawAlerts();
-  ballgame.playBall();
-  wordgame.displayWord(predictedWord);
+  // ballgame.playBall();
+  // wordgame.displayWord(predictedWord);
   game.drawLevelAndTimer();
 }
