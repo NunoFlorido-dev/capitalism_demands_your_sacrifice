@@ -340,24 +340,37 @@ class SayTheWords {
     this.game = game;
     this.beep = beep;
 
+    // Main container
     this.wordContainer = document.createElement("div");
     this.wordContainer.id = "word_container";
     this.wordContainer.style.display = "flex";
     this.wordContainer.style.flexDirection = "column";
     this.wordContainer.style.alignItems = "center";
     this.wordContainer.style.justifyContent = "center";
-    this.wordContainer.style.gap = "5px"; // Initial space between question & word
+    this.wordContainer.style.position = "absolute";
+    this.wordContainer.style.top = "50%";
+    this.wordContainer.style.left = "50%";
+    this.wordContainer.style.transform = "translate(-50%, -50%)";
+    this.wordContainer.style.textAlign = "center";
 
+    // Question text (Fixed position)
     this.questionDisplay = document.createElement("p");
     this.questionDisplay.id = "question_display";
+    this.questionDisplay.style.position = "fixed";
+    this.questionDisplay.style.color = "#edde3b";
     this.questionDisplay.style.margin = "0";
-    this.questionDisplay.style.fontSize = "24px";
+    this.questionDisplay.style.marginBottom = "10%";
+    this.questionDisplay.style.fontSize = "2.5rem"; // Slightly smaller for clarity
+    this.questionDisplay.style.height = "50px"; // Fixed height to prevent shifting
 
+    // Word text (Will grow dynamically)
     this.wordDisplay = document.createElement("p");
     this.wordDisplay.id = "word_display";
-    this.wordDisplay.style.margin = "0";
-    this.wordDisplay.style.fontSize = "72px"; // Start big
+    this.wordDisplay.style.margin = "10px 0 0 0";
+    this.wordDisplay.style.fontSize = "72px";
+    this.wordDisplay.style.transition = "font-size 0.1s ease-out"; // Smooth scaling
 
+    // Append elements
     document.body.appendChild(this.wordContainer);
     this.wordContainer.appendChild(this.questionDisplay);
     this.wordContainer.appendChild(this.wordDisplay);
@@ -380,32 +393,31 @@ class SayTheWords {
       Company: "Where do you work?",
     };
 
-    // New words and their questions for day 3
     this.weirdWords = [
       { word: "BABJEEBZIGUAAA", question: "How do you see in the future?" },
-      { word: "DORRREEEEPSIAA", question: "What do you want for a family?" },
+      {
+        word: "DORRREEEEPSIAA",
+        question: "What do you want for your family?",
+      },
       { word: "GUPTLOOOOTZAA", question: "Are you happy?" },
       { word: "CRRPSOOOBCHIA", question: "You are a good person, right?" },
     ];
 
     this.currentWord = "";
-    this.fontSize = 72; // Start large
+    this.fontSize = 72;
     this.isListening = false;
     this.wordStartTime = null;
-    this.day = 3; // Set the day to 4 for this example
+    this.day = 2;
   }
 
   /** Starts the loop to show words */
   startWordChallenge() {
     this.pickRandomWord();
   }
+
   pickRandomWord() {
     let newWord;
-    let wordAdded = false;
-
-    // If it's day 3 or later, include the weird words in the word list
     if (this.game.getDay() >= 2) {
-      // Add weird words only if it's day 3 or later
       this.wordArray = [
         "Boss",
         "Work",
@@ -413,23 +425,17 @@ class SayTheWords {
         "Shareholder",
         "Profit",
         "Company",
-        ...this.weirdWords.map((item) => item.word), // Add weird words
+        ...this.weirdWords.map((item) => item.word),
       ];
-
-      // Choose a weird word randomly from the added ones
       const weirdWord =
         this.weirdWords[Math.floor(Math.random() * this.weirdWords.length)];
       newWord = weirdWord.word;
-
-      // Add the weird word's question only for day 3 or later
       this.wordQuestions[newWord] = weirdWord.question;
-      wordAdded = true;
     } else {
-      // For days before 3, use only the regular words
       do {
         newWord =
           this.wordArray[Math.floor(Math.random() * this.wordArray.length)];
-      } while (newWord === this.currentWord); // Avoid repeating
+      } while (newWord === this.currentWord);
     }
 
     this.currentWord = newWord;
@@ -441,8 +447,6 @@ class SayTheWords {
 
     this.isListening = true;
     this.wordStartTime = performance.now();
-
-    // Start increasing size over time
     this.increaseFontSize();
   }
 
@@ -450,24 +454,12 @@ class SayTheWords {
   increaseFontSize() {
     if (!this.isListening) return;
 
-    // Calculate elapsed time
     let elapsed = performance.now() - this.wordStartTime;
-
-    // Limit the font size to the window width
-    let maxFontSize = window.innerWidth * 0.8; // Limit to 80% of the window width
-    let newSize = 72 + Math.pow(elapsed / 100, 1.5); // 1.5 gives an exponential growth effect
-
-    // Ensure the word doesn't exceed the max font size
+    let maxFontSize = window.innerWidth * 0.8;
+    let newSize = 72 + Math.pow(elapsed / 100, 1.5);
     if (newSize > maxFontSize) newSize = maxFontSize;
 
-    // Update font size
     this.wordDisplay.style.fontSize = `${newSize}px`;
-
-    // Scale the margin based on the new font size
-    let marginSize = newSize / 4; // Proportional margin to the font size
-    this.wordContainer.style.gap = `${marginSize}px`; // Adjust gap between question and word
-
-    // Continue updating the size smoothly using requestAnimationFrame
     requestAnimationFrame(() => this.increaseFontSize());
   }
 
@@ -480,8 +472,7 @@ class SayTheWords {
     ) {
       this.isListening = false;
       this.wordDisplay.style.color = "#15eb4e";
-
-      setTimeout(() => this.pickRandomWord(), 1000); // Move to next word after 1 sec
+      setTimeout(() => this.pickRandomWord(), 1000);
     }
   }
 }
