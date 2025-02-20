@@ -94,16 +94,33 @@ canvas {
 #word_container{
   position: fixed;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
+  gap: 0.5rem;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  z-index: 2;
+  max-width: none; /* Ensure no width limit */
+  max-height: none; /* Ensure no height limit */
 }
+
 
 #word_display{
   color: #317cf5;
   font-family: "OT Neue Montreal Bold", sans-serif;
+  font-size: 6rem;
+  max-width: none; /* Ensure no width limit */
+  max-height: none; /* Ensure no height limit */
+}
+
+
+#question_display{
+  position: fixed;
+  color: #317cf5;
+  top: 25%;
+  font-family: "OT Neue Montreal Regular", sans-serif;
   font-size: 6rem;
 }
 

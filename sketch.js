@@ -338,14 +338,28 @@ class SayTheWords {
   constructor(soundClassifier, game, beep) {
     this.soundClassifier = soundClassifier;
     this.game = game;
+    this.beep = beep;
 
     this.wordContainer = document.createElement("div");
     this.wordContainer.id = "word_container";
+    this.wordContainer.style.display = "flex";
+    this.wordContainer.style.flexDirection = "column";
+    this.wordContainer.style.alignItems = "center";
+    this.wordContainer.style.justifyContent = "center";
+    this.wordContainer.style.gap = "5px"; // Initial space between question & word
+
+    this.questionDisplay = document.createElement("p");
+    this.questionDisplay.id = "question_display";
+    this.questionDisplay.style.margin = "0";
+    this.questionDisplay.style.fontSize = "24px";
 
     this.wordDisplay = document.createElement("p");
     this.wordDisplay.id = "word_display";
+    this.wordDisplay.style.margin = "0";
+    this.wordDisplay.style.fontSize = "72px"; // Start big
 
     document.body.appendChild(this.wordContainer);
+    this.wordContainer.appendChild(this.questionDisplay);
     this.wordContainer.appendChild(this.wordDisplay);
 
     this.wordArray = [
@@ -355,91 +369,106 @@ class SayTheWords {
       "Shareholder",
       "Profit",
       "Company",
-      "BABJEEBZIGUAAA",
-      "DORRREEEEPSIAA",
-      "GUPTLOOOOTZAA",
-      "CRRPSOOOBCHIA",
+    ];
+
+    this.wordQuestions = {
+      Boss: "Who's the best?",
+      Work: "What do we do here?",
+      Coworker: "Who do you work with?",
+      Shareholder: "Who owns the company?",
+      Profit: "What do we strive for?",
+      Company: "Where do you work?",
+    };
+
+    // New words and their questions for day 3
+    this.weirdWords = [
+      { word: "BABJEEBZIGUAAA", question: "How do you see in the future?" },
+      { word: "DORRREEEEPSIAA", question: "What do you want for a family?" },
+      { word: "GUPTLOOOOTZAA", question: "Are you happy?" },
+      { word: "CRRPSOOOBCHIA", question: "You are a good person, right?" },
     ];
 
     this.currentWord = "";
-    this.wordTimeout = null;
-    this.listenTimeout = null;
-    this.beep = beep;
-
-    // Initialize dynamic timers
-    this.updateTimers();
+    this.fontSize = 72; // Start large
+    this.isListening = false;
+    this.wordStartTime = null;
+    this.day = 3; // Set the day to 4 for this example
   }
 
-  /** Adjust timers based on elapsed game time */
-  updateTimers() {
-    let seconds = this.game.getTimeInSeconds();
-
-    if (seconds < 30) {
-      this.waitTime = 4000; // 4 sec before a new word
-      this.listenTime = 2000; // 2 sec to say the word
-    } else if (seconds < 60) {
-      this.waitTime = 3000; // 3 sec before new word
-      this.listenTime = 1800; // Slightly less time to say it
-    } else if (seconds < 90) {
-      this.waitTime = 2500;
-      this.listenTime = 1500;
-    } else {
-      this.waitTime = 2000; // Faster-paced challenge
-      this.listenTime = 1200;
-    }
-  }
-
-  /** Starts the loop to show words based on timers */
+  /** Starts the loop to show words */
   startWordChallenge() {
-    this.scheduleNextWord();
+    this.pickRandomWord();
   }
-
-  /** Schedules the next word after waitTime */
-  scheduleNextWord() {
-    clearTimeout(this.wordTimeout);
-    this.updateTimers(); // Adjust time dynamically
-    this.wordTimeout = setTimeout(() => this.pickRandomWord(), this.waitTime);
-  }
-
-  /** Picks and displays a new word */
   pickRandomWord() {
-    let seconds = this.game.getTimeInSeconds();
-    let wordsToUse =
-      seconds < 60
-        ? this.wordArray.slice(0, -4) // Easy words in early game
-        : this.wordArray.slice(-4); // Hard words in late game
-
     let newWord;
-    do {
-      newWord = wordsToUse[Math.floor(Math.random() * wordsToUse.length)];
-    } while (newWord === this.currentWord); // Avoid repeating
+    let wordAdded = false;
+
+    // If it's day 3 or later, include the weird words in the word list
+    if (this.game.getDay() >= 2) {
+      // Add weird words only if it's day 3 or later
+      this.wordArray = [
+        "Boss",
+        "Work",
+        "Coworker",
+        "Shareholder",
+        "Profit",
+        "Company",
+        ...this.weirdWords.map((item) => item.word), // Add weird words
+      ];
+
+      // Choose a weird word randomly from the added ones
+      const weirdWord =
+        this.weirdWords[Math.floor(Math.random() * this.weirdWords.length)];
+      newWord = weirdWord.word;
+
+      // Add the weird word's question only for day 3 or later
+      this.wordQuestions[newWord] = weirdWord.question;
+      wordAdded = true;
+    } else {
+      // For days before 3, use only the regular words
+      do {
+        newWord =
+          this.wordArray[Math.floor(Math.random() * this.wordArray.length)];
+      } while (newWord === this.currentWord); // Avoid repeating
+    }
 
     this.currentWord = newWord;
     this.wordDisplay.textContent = this.currentWord;
+    this.questionDisplay.textContent = this.wordQuestions[this.currentWord];
     this.wordDisplay.style.color = "#317cf5";
-    this.isListening = true;
+    this.wordDisplay.style.fontSize = "72px";
+    this.fontSize = 72;
 
-    // Start listen timer
-    clearTimeout(this.listenTimeout);
-    this.listenTimeout = setTimeout(
-      () => this.evaluateWord(false),
-      this.listenTime
-    );
+    this.isListening = true;
+    this.wordStartTime = performance.now();
+
+    // Start increasing size over time
+    this.increaseFontSize();
   }
 
-  evaluateWord(correct) {
-    this.isListening = false;
+  /** Makes the word bigger the longer it takes */
+  increaseFontSize() {
+    if (!this.isListening) return;
 
-    if (correct) {
-      clearTimeout(this.listenTimeout); // Prevents late penalty!
-      this.wordDisplay.style.color = "#15eb4e";
-    } else {
-      this.wordDisplay.style.color = "#ed221f";
-      this.beep.play();
-      this.game.addPenaltyGame(5); // Deduct points for wrong answer
-    }
+    // Calculate elapsed time
+    let elapsed = performance.now() - this.wordStartTime;
 
-    this.scheduleNextWord();
+    // Limit the font size to the window width
+    let maxFontSize = window.innerWidth * 0.8; // Limit to 80% of the window width
+    let newSize = 72 + Math.pow(elapsed / 100, 1.5); // 1.5 gives an exponential growth effect
+
+    // Ensure the word doesn't exceed the max font size
+    if (newSize > maxFontSize) newSize = maxFontSize;
+
+    // Update font size
+    this.wordDisplay.style.fontSize = `${newSize}px`;
+
+    // Scale the margin based on the new font size
+    let marginSize = newSize / 4; // Proportional margin to the font size
+    this.wordContainer.style.gap = `${marginSize}px`; // Adjust gap between question and word
+
+    // Continue updating the size smoothly using requestAnimationFrame
+    requestAnimationFrame(() => this.increaseFontSize());
   }
 
   /** Checks if the predicted word is correct */
@@ -449,7 +478,10 @@ class SayTheWords {
       predictedWord.toLowerCase().trim() ===
         this.currentWord.toLowerCase().trim()
     ) {
-      this.evaluateWord(true);
+      this.isListening = false;
+      this.wordDisplay.style.color = "#15eb4e";
+
+      setTimeout(() => this.pickRandomWord(), 1000); // Move to next word after 1 sec
     }
   }
 }
@@ -651,6 +683,12 @@ class GameSystem {
     return Math.floor(this.gameTime / 1000);
   }
 
+  // Dynamically calculate the day based on elapsed game time
+  getDay() {
+    let seconds = this.getTimeInSeconds();
+    return Math.floor(seconds / 60); // 1 "real" minute = 1 full day
+  }
+
   increaseDifficulty() {
     let seconds = this.getTimeInSeconds();
 
@@ -746,7 +784,7 @@ class GameSystem {
     let totalSeconds = Math.ceil(this.getTimeInSeconds());
 
     // Map 60 seconds to 1 full day
-    let days = Math.floor(totalSeconds / 60); // 1 "real" minute = 1 full day
+    let days = this.getDay(); // Dynamically calculate day based on time
     let hours = Math.floor((totalSeconds % 60) * (24 / 60)); // Scale seconds to 24-hour range
     let minutes = Math.floor(((totalSeconds % 60) * (24 / 60) - hours) * 60); // Convert remaining fraction to minutes
     // Format the time display
@@ -758,6 +796,7 @@ class GameSystem {
     }
   }
 }
+
 /* **************************************************************************************** */
 
 let faceMesh;
