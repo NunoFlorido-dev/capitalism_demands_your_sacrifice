@@ -19,6 +19,8 @@ class FaceTracker {
     this.durationThresholdOffScreen = 4000; // 4s
 
     this.beep = beep;
+
+    this.hand = document.getElementById("hand");
   }
 
   updateFaces(results) {
@@ -211,6 +213,14 @@ class FaceTracker {
       this.gazeX = (leftPupil.x + rightPupil.x) / 2;
       this.gazeY = (leftPupil.y + rightPupil.y) / 2;
 
+      this.trueGazeX = this.gazeX - 40;
+      this.trueGazeY = this.gazeY - 40;
+
+      if (this.hand) {
+        this.hand.style.left = `${this.trueGazeX}px`;
+        this.hand.style.top = `${this.trueGazeY}px`;
+      }
+
       fill("#317cf5");
       noStroke();
       circle(this.gazeX, this.gazeY, 20); // Draw gaze location on screen
@@ -243,6 +253,8 @@ class FollowTheBall {
     if (this.moneyBatch) {
       this.moneyBatch.style("position", "absolute");
     }
+
+    this.handImage = document.querySelector("#hand img"); // Get the hand image element
   }
 
   moveBall() {
@@ -300,7 +312,16 @@ class FollowTheBall {
     this.moveBall();
     this.drawBall();
 
-    if (!this.getCircleProximity()) {
+    this.gazeOverBall = this.getCircleProximity();
+
+    if (this.gazeOverBall) {
+      this.handImage.src = "./assets/images/facepunch.webp"; // Change to open hand
+    } else {
+      this.handImage.src =
+        "./assets/images/raised_hand_with_fingers_splayed.webp"; // Change to closed hand
+    }
+
+    if (!this.gazeOverBall) {
       this.game.addPenaltyGame(3);
     }
   }
