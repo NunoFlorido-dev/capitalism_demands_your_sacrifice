@@ -18,23 +18,26 @@ canvas {
   src: url("./assets/fonts/OTNeueMontreal-BoldSqueezed.woff");
 }
 
- /* Container for the score bar */
- .score-container {
+/* Container for the vertical score bar */
+.score-container {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 40px;
+  right: 0; /* Align to the right */
+  top: 0;
+  width: 40px; /* Adjust width for a vertical bar */
+  height: 100vh; /* Full screen height */
   background-color: #c9c9c9;
+  display: flex;
+  flex-direction: column-reverse; /* Fill from bottom to top */
 }
 
 /* The progress bar inside */
 .score-bar {
-  height: 100%;
-  width: 0%;
+  width: 100%;
+  height: 100%; /* Start at full height */
   background-color: #317cf5;
-  transition: width 0.3s ease-in-out;
+  transition: height 0.3s ease-in-out;
 }
+
 
 /* Score text */
 .score-text {
@@ -45,8 +48,7 @@ canvas {
   font-size: 1.85rem;
   font-weight: bold;
   color: #000;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 2.5%;
 }
 
 .info-container{
@@ -59,7 +61,7 @@ canvas {
   font-size: 2rem;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   padding-right: 2rem;
   padding-top: 1rem;
   padding-left: 2rem;

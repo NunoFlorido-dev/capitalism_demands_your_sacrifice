@@ -220,10 +220,6 @@ class FaceTracker {
         this.hand.style.left = `${this.trueGazeX}px`;
         this.hand.style.top = `${this.trueGazeY}px`;
       }
-
-      fill("#317cf5");
-      noStroke();
-      circle(this.gazeX, this.gazeY, 20); // Draw gaze location on screen
     } else {
       console.error("Left or right pupil data is missing");
       this.gazeX = null;
@@ -236,68 +232,82 @@ class FaceTracker {
 
 class FollowTheBall {
   constructor(faceTracker, game) {
-    this.faceTracker = faceTracker; // Use the existing face tracker
+    this.faceTracker = faceTracker; // Use shared FaceTracker
     this.game = game;
 
-    this.ballX = width / 2;
-    this.ballY = height / 2;
-    this.ballColorNormal = color(255, 255, 0);
-    this.ballColorAccept = color(0, 255, 0);
+    this.ballX = window.innerWidth / 2;
+    this.ballY = window.innerHeight / 2;
+    this.ballColorNormal = "yellow";
+    this.ballColorAccept = "green";
     this.ballColor = this.ballColorNormal;
 
     // Initial noise offset values for X and Y
-    this.noiseOffsetX = random(1000);
-    this.noiseOffsetY = random(1000);
+    this.noiseOffsetX = Math.random() * 1000;
+    this.noiseOffsetY = Math.random() * 1000;
 
-    this.moneyBatch = select("#money_batch"); // Select the image
+    this.moneyBatch = document.querySelector("#money_batch"); // Select the image
     if (this.moneyBatch) {
-      this.moneyBatch.style("position", "absolute");
+      this.moneyBatch.style.position = "absolute";
     }
 
     this.handImage = document.querySelector("#hand img"); // Get the hand image element
   }
 
+  updateBallSpeed() {
+    let seconds = this.game.getTimeInSeconds();
+    if (seconds < 30) {
+      this.ballSpeedMultiplier = 1;
+    } else if (seconds < 60) {
+      this.ballSpeedMultiplier = 1.5;
+    } else if (seconds < 90) {
+      this.ballSpeedMultiplier = 2;
+    } else {
+      this.ballSpeedMultiplier = 3; // Fastest mode
+    }
+  }
+
   moveBall() {
+    this.updateBallSpeed(); // Adjust difficulty dynamically
+
     // Update noise values over time for smooth movement
-    this.randomSpdX = noise(this.noiseOffsetX);
-    this.randomSpdY = noise(this.noiseOffsetY);
+    let randomSpdX =
+      (noise(this.noiseOffsetX) - 0.5) * 2 * this.ballSpeedMultiplier;
+    let randomSpdY =
+      (noise(this.noiseOffsetY) - 0.5) * 2 * this.ballSpeedMultiplier;
 
-    // Apply the Perlin noise to the ball's position, but with slower movement
-    this.ballX += (this.randomSpdX - 0.5) * 2 * this.game.ballSpeedMultiplier; // Adjust the multiplier for speed
-    this.ballY += (this.randomSpdY - 0.5) * 2 * this.game.ballSpeedMultiplier; // Adjust the multiplier for speed
+    // Apply movement
+    this.ballX += randomSpdX;
+    this.ballY += randomSpdY;
 
-    // Increment noise offsets to get continuous movement
+    // Increment noise offsets for continuous movement
     this.noiseOffsetX += 0.01;
     this.noiseOffsetY += 0.01;
 
-    // Constrain ball's position to make sure it stays within the screen bounds
-    this.ballX = constrain(this.ballX, 200, width - 200);
-    this.ballY = constrain(this.ballY, 250, height - 250);
+    // Constrain ball's position to stay within screen bounds
+    this.ballX = Math.max(200, Math.min(this.ballX, window.innerWidth - 200));
+    this.ballY = Math.max(250, Math.min(this.ballY, window.innerHeight - 250));
   }
 
   drawBall() {
     if (this.getCircleProximity()) {
-      this.moneyBatch.style("filter", "none");
+      this.moneyBatch.style.filter = "none";
     } else {
-      this.moneyBatch.style(
-        "filter",
-        "hue-rotate(-60deg) saturate(3) brightness(1)"
-      );
+      this.moneyBatch.style.filter =
+        "hue-rotate(-60deg) saturate(3) brightness(1)";
     }
     if (this.moneyBatch) {
-      this.moneyBatch.style("left", this.ballX + "px");
-      this.moneyBatch.style("top", this.ballY + "px");
-      this.moneyBatch.style("transform", "translate(-50%, -50%)");
+      this.moneyBatch.style.left = `${this.ballX}px`;
+      this.moneyBatch.style.top = `${this.ballY}px`;
+      this.moneyBatch.style.transform = "translate(-50%, -50%)";
     }
   }
 
-  // Get the distance between the eye gaze and the ball
   getDistance(x1, y1, x2, y2) {
-    return dist(x1, y1, x2, y2);
+    return Math.hypot(x2 - x1, y2 - y1);
   }
 
   getCircleProximity() {
-    let gazeData = this.faceTracker.getGazeData(); // Use shared FaceTracker
+    let gazeData = this.faceTracker.getGazeData();
     if (!gazeData) return false;
 
     let gazeX = gazeData[0];
@@ -312,16 +322,13 @@ class FollowTheBall {
     this.moveBall();
     this.drawBall();
 
-    this.gazeOverBall = this.getCircleProximity();
+    let gazeOverBall = this.getCircleProximity();
 
-    if (this.gazeOverBall) {
+    if (gazeOverBall) {
       this.handImage.src = "./assets/images/facepunch.webp"; // Change to open hand
     } else {
       this.handImage.src =
         "./assets/images/raised_hand_with_fingers_splayed.webp"; // Change to closed hand
-    }
-
-    if (!this.gazeOverBall) {
       this.game.addPenaltyGame(3);
     }
   }
@@ -357,10 +364,29 @@ class SayTheWords {
     this.currentWord = "";
     this.wordTimeout = null;
     this.listenTimeout = null;
-    this.waitTime = 4000; // 4 sec before showing a new word
-    this.listenTime = 2000; // 2 sec to say the word
-    this.isListening = false;
     this.beep = beep;
+
+    // Initialize dynamic timers
+    this.updateTimers();
+  }
+
+  /** Adjust timers based on elapsed game time */
+  updateTimers() {
+    let seconds = this.game.getTimeInSeconds();
+
+    if (seconds < 30) {
+      this.waitTime = 4000; // 4 sec before a new word
+      this.listenTime = 2000; // 2 sec to say the word
+    } else if (seconds < 60) {
+      this.waitTime = 3000; // 3 sec before new word
+      this.listenTime = 1800; // Slightly less time to say it
+    } else if (seconds < 90) {
+      this.waitTime = 2500;
+      this.listenTime = 1500;
+    } else {
+      this.waitTime = 2000; // Faster-paced challenge
+      this.listenTime = 1200;
+    }
   }
 
   /** Starts the loop to show words based on timers */
@@ -371,21 +397,22 @@ class SayTheWords {
   /** Schedules the next word after waitTime */
   scheduleNextWord() {
     clearTimeout(this.wordTimeout);
+    this.updateTimers(); // Adjust time dynamically
     this.wordTimeout = setTimeout(() => this.pickRandomWord(), this.waitTime);
   }
 
   /** Picks and displays a new word */
   pickRandomWord() {
+    let seconds = this.game.getTimeInSeconds();
     let wordsToUse =
-      this.game.level === 5
-        ? this.wordArray.slice(-4)
-        : this.wordArray.slice(0, -4);
+      seconds < 60
+        ? this.wordArray.slice(0, -4) // Easy words in early game
+        : this.wordArray.slice(-4); // Hard words in late game
 
     let newWord;
-
     do {
       newWord = wordsToUse[Math.floor(Math.random() * wordsToUse.length)];
-    } while (newWord === this.currentWord); // Keep choosing until it's different
+    } while (newWord === this.currentWord); // Avoid repeating
 
     this.currentWord = newWord;
     this.wordDisplay.textContent = this.currentWord;
@@ -432,22 +459,19 @@ class SayTheWords {
 class TrashTheMails {
   constructor(game, beep) {
     this.game = game;
-    this.mail = select("#email"); // This is still a p5.js object
-    this.outbox = select("#outbox_tray"); // This is still a p5.js object
+    this.mail = select("#email");
+    this.outbox = select("#outbox_tray");
     this.item = this.mail;
     this.dragging = false;
-    this.timerId = null; // Track the timeout for penalty
-    this.level = this.game.level;
+    this.timerId = null;
 
-    this.changeTime();
-    this.time = 5000;
+    this.beep = beep;
+    this.time = this.getChallengeTime(); // Set time based on game progression
 
     this.mail.style("display", "block");
     this.outbox.style("display", "block");
 
     this.initDrag();
-
-    this.beep = beep;
   }
 
   // Initialize drag events for mail
@@ -458,11 +482,12 @@ class TrashTheMails {
   }
 
   startDrag(event) {
+    if (this.mail.style("display") !== "block") return; // Prevent drag before visible
+
     this.dragging = true;
     this.offsetX = event.clientX - this.mail.position().x;
     this.offsetY = event.clientY - this.mail.position().y;
 
-    // Cancel the time-based penalty when the player starts moving the item
     if (this.timerId) {
       clearTimeout(this.timerId);
       this.timerId = null;
@@ -534,16 +559,23 @@ class TrashTheMails {
     element.style("top", `${y}px`);
   }
 
-  changeTime() {
-    if (this.level >= 3 && this.level < 5) {
-      this.time = 5000;
-    } else if (this.level >= 5) {
-      this.time = 2000;
+  getChallengeTime() {
+    let seconds = this.game.getTimeInSeconds();
+
+    if (seconds < 30) {
+      return 5000; // Easy (5 seconds)
+    } else if (seconds < 60) {
+      return 4000; // Medium (4 seconds)
+    } else if (seconds < 90) {
+      return 3000; // Hard (3 seconds)
+    } else {
+      return 2000; // Extreme (2 seconds)
     }
   }
 
   timer() {
     this.setRandomPositions();
+    this.time = this.getChallengeTime(); // Adjust time dynamically
     if (this.timerId) clearTimeout(this.timerId);
 
     this.timerId = setTimeout(() => {
@@ -556,6 +588,17 @@ class TrashTheMails {
 
   restartChallenge() {
     if (this.timerId) clearTimeout(this.timerId);
+
+    // Ensure elements remain visible
+    if (this.mail.style("display") !== "block") {
+      console.log("Mail was hidden unexpectedly, restoring visibility.");
+      this.mail.style("display", "block");
+    }
+    if (this.outbox.style("display") !== "block") {
+      console.log("Outbox was hidden unexpectedly, restoring visibility.");
+      this.outbox.style("display", "block");
+    }
+
     this.setRandomPositions();
     this.timer();
   }
@@ -569,12 +612,11 @@ class TrashTheMails {
 
 class GameSystem {
   constructor(beep) {
-    this.level = 1;
     this.score = 0;
     this.maxScore = 100;
     this.lastPenaltyTime = 0;
 
-    // Penalty Time
+    // Penalty Timing
     this.penaltyTimeAlert = 1000;
     this.penaltyTimeGame = 4000;
 
@@ -583,51 +625,67 @@ class GameSystem {
     this.alertFlashDuration = 500;
     this.alertFlashStartTime = null;
 
-    // Level and timer properties
-    this.levelStartTime = millis(); // Start the timer for level 1
-    this.levelDuration = 30000; // 30 seconds per level
-    this.levelEndTime = this.levelStartTime + this.levelDuration; // End time for the current level
+    // Game Timer
+    this.startTime = millis(); // Game start time
+    this.gameTime = 0; // Tracks elapsed time in milliseconds
+    this.baseSpeed = 1; // Base difficulty multiplier
 
     // Get UI elements
     this.scoreBar = document.getElementById("scoreBar");
     this.scoreText = document.getElementById("scoreText");
-
-    // HTML elements for level and timer
-    this.levelDisplay = document.getElementById("levelDisplay");
     this.timerDisplay = document.getElementById("timerDisplay");
+    this.dayDisplay = document.getElementById("dayDisplay");
 
-    // Ball speed modifier based on level
+    // Ball speed modifier
     this.ballSpeedMultiplier = 1;
 
     this.beep = beep;
   }
 
-  update() {
-    let currentTime = millis();
+  updateTime() {
+    this.gameTime = millis() - this.startTime;
+    this.increaseDifficulty();
+  }
 
-    // Check if it's time to move to the next level
-    if (currentTime >= this.levelEndTime) {
-      this.level++;
-      if (this.level > 5) {
-        this.level = 1; // Reset to level 1 after level 5
-      }
-      this.levelStartTime = currentTime;
-      this.levelEndTime = this.levelStartTime + this.levelDuration; // Reset the level end time
+  getTimeInSeconds() {
+    return Math.floor(this.gameTime / 1000);
+  }
 
-      // Update the ball speed multiplier based on the level
-      if (this.level === 1) {
-        this.ballSpeedMultiplier = 1;
-      } else if (this.level === 2) {
-        wordgame.startWordChallenge();
-      } else if (this.level === 3) {
-        mailgame.mail.style("display", "block");
-        mailgame.outbox.style("display", "block");
-        mailgame.playChallenge();
-        this.ballSpeedMultiplier = 10;
-      } else if (this.level === 5) {
-        this.ballSpeedMultiplier = 20;
-      }
+  increaseDifficulty() {
+    let seconds = this.getTimeInSeconds();
+
+    // Difficulty scaling
+    if (seconds >= 30 && seconds < 60) {
+      this.baseSpeed = 1.5;
+    } else if (seconds >= 60 && seconds < 90) {
+      this.baseSpeed = 2;
+    } else if (seconds >= 90) {
+      this.baseSpeed = 3;
     }
+
+    // Prevent redundant challenge restarts
+    if (seconds === 30 && !this.wordChallengeStarted) {
+      wordgame.startWordChallenge();
+      this.wordChallengeStarted = true;
+    }
+
+    if (seconds === 60 && !this.mailChallengeStarted) {
+      console.log("Starting mail challenge.");
+      mailgame.mail.style("display", "block");
+      mailgame.outbox.style("display", "block");
+      mailgame.playChallenge();
+      this.ballSpeedMultiplier = 10;
+      this.mailChallengeStarted = true;
+    }
+
+    if (seconds === 90 && !this.finalDifficultyStarted) {
+      this.ballSpeedMultiplier = 20;
+      this.finalDifficultyStarted = true;
+    }
+  }
+
+  update() {
+    this.updateTime();
   }
 
   addPenaltyAlert(points) {
@@ -637,8 +695,6 @@ class GameSystem {
       this.score = Math.min(this.score + points, this.maxScore);
       this.lastPenaltyTime = currentTime;
       this.updateScoreBar();
-
-      // Trigger the red screen alert for penalty
       this.triggerRedAlert();
     }
   }
@@ -650,10 +706,7 @@ class GameSystem {
       this.score = Math.min(this.score + points, this.maxScore);
       this.lastPenaltyTime = currentTime;
       this.updateScoreBar();
-
-      // Trigger the red screen alert for penalty
       this.beep.play();
-
       this.triggerRedAlert();
     }
   }
@@ -669,12 +722,13 @@ class GameSystem {
 
   updateScoreBar() {
     let progress = (this.score / this.maxScore) * 100;
-    this.scoreBar.style.width = progress + "%";
-    this.scoreText.textContent = `${this.score}% of ${this.maxScore}% unemployed`;
+    let remainingHeight = 100 - progress;
+
+    this.scoreBar.style.height = remainingHeight + "%";
+    this.scoreText.textContent = `${100 - this.score}%`;
   }
 
   drawAlerts() {
-    // Drawing the red alert screen logic
     if (
       this.alertFlashStartTime !== null &&
       millis() - this.alertFlashStartTime <= this.alertFlashDuration
@@ -688,17 +742,22 @@ class GameSystem {
     }
   }
 
-  // Display level and timer on the screen
-  drawLevelAndTimer() {
-    let remainingTime = Math.max(0, this.levelEndTime - millis());
-    let remainingSeconds = Math.ceil(remainingTime / 1000); // Convert milliseconds to seconds
+  drawTimer() {
+    let totalSeconds = Math.ceil(this.getTimeInSeconds());
 
-    // Update HTML elements with level and timer info
-    this.levelDisplay.textContent = `Shift: ${this.level}`;
-    this.timerDisplay.textContent = `Time Left: ${remainingSeconds}s`;
+    // Map 60 seconds to 1 full day
+    let days = Math.floor(totalSeconds / 60); // 1 "real" minute = 1 full day
+    let hours = Math.floor((totalSeconds % 60) * (24 / 60)); // Scale seconds to 24-hour range
+    let minutes = Math.floor(((totalSeconds % 60) * (24 / 60) - hours) * 60); // Convert remaining fraction to minutes
+    // Format the time display
+    this.timerDisplay.textContent = `Time Elapsed: ${hours}h ${minutes}m`;
+
+    // Update the day display
+    if (this.dayDisplay) {
+      this.dayDisplay.textContent = `Day ${days + 1}`; // Day 1 starts at 0 seconds
+    }
   }
 }
-
 /* **************************************************************************************** */
 
 let faceMesh;
@@ -771,7 +830,7 @@ function startGame() {
   game.drawAlerts();
   ballgame.playBall();
   wordgame.displayWord(predictedWord);
-  game.drawLevelAndTimer();
+  game.drawTimer();
 }
 
 function draw() {
