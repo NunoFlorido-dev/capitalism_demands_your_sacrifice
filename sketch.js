@@ -241,7 +241,10 @@ class FollowTheBall {
     this.ballColorAccept = "green";
     this.ballColor = this.ballColorNormal;
 
-    // Initial noise offset values for X and Y
+    this.ballSize = 200; // Start big
+    this.minBallSize = 10; // Smallest size
+    this.shrinkRate = 50; // Decrease size every 30 sec
+
     this.noiseOffsetX = Math.random() * 1000;
     this.noiseOffsetY = Math.random() * 1000;
 
@@ -266,24 +269,32 @@ class FollowTheBall {
     }
   }
 
-  moveBall() {
-    this.updateBallSpeed(); // Adjust difficulty dynamically
+  updateBallSize() {
+    let seconds = this.game.getTimeInSeconds();
 
-    // Update noise values over time for smooth movement
+    // Shrink the ball every 60 seconds
+    let shrinkStep = Math.floor(seconds / 60);
+    this.ballSize = Math.max(
+      200 - shrinkStep * this.shrinkRate,
+      this.minBallSize
+    );
+  }
+
+  moveBall() {
+    this.updateBallSpeed();
+    this.updateBallSize();
+
     let randomSpdX =
       (noise(this.noiseOffsetX) - 0.5) * 2 * this.ballSpeedMultiplier;
     let randomSpdY =
       (noise(this.noiseOffsetY) - 0.5) * 2 * this.ballSpeedMultiplier;
 
-    // Apply movement
     this.ballX += randomSpdX;
     this.ballY += randomSpdY;
 
-    // Increment noise offsets for continuous movement
     this.noiseOffsetX += 0.01;
     this.noiseOffsetY += 0.01;
 
-    // Constrain ball's position to stay within screen bounds
     this.ballX = Math.max(200, Math.min(this.ballX, window.innerWidth - 200));
     this.ballY = Math.max(250, Math.min(this.ballY, window.innerHeight - 250));
   }
@@ -295,7 +306,10 @@ class FollowTheBall {
       this.moneyBatch.style.filter =
         "hue-rotate(-60deg) saturate(3) brightness(1)";
     }
+
     if (this.moneyBatch) {
+      this.moneyBatch.style.width = `${this.ballSize}px`;
+      this.moneyBatch.style.height = `${this.ballSize}px`;
       this.moneyBatch.style.left = `${this.ballX}px`;
       this.moneyBatch.style.top = `${this.ballY}px`;
       this.moneyBatch.style.transform = "translate(-50%, -50%)";
@@ -314,8 +328,7 @@ class FollowTheBall {
     let gazeY = gazeData[1];
 
     let distance = this.getDistance(this.ballX, this.ballY, gazeX, gazeY);
-
-    return distance <= 40;
+    return distance <= this.ballSize / 2;
   }
 
   playBall() {
@@ -325,10 +338,10 @@ class FollowTheBall {
     let gazeOverBall = this.getCircleProximity();
 
     if (gazeOverBall) {
-      this.handImage.src = "./assets/images/facepunch.webp"; // Change to open hand
+      this.handImage.src = "./assets/images/facepunch.webp";
     } else {
       this.handImage.src =
-        "./assets/images/raised_hand_with_fingers_splayed.webp"; // Change to closed hand
+        "./assets/images/raised_hand_with_fingers_splayed.webp";
       this.game.addPenaltyGame(3);
     }
   }
@@ -394,7 +407,10 @@ class SayTheWords {
     };
 
     this.weirdWords = [
-      { word: "BABJEEBZIGUAAA", question: "How do you see in the future?" },
+      {
+        word: "BABJEEBZIGUAAA",
+        question: "How do you see yourself in the future?",
+      },
       {
         word: "DORRREEEEPSIAA",
         question: "What do you want for your family?",
