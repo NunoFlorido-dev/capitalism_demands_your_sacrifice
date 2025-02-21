@@ -274,6 +274,9 @@ class FollowTheBall {
     setTimeout(() => {
       alertChallenge("Follow the money with your head's hand!");
     }, 2000);
+
+    this.startTime = Date.now(); // Store the current time when the game starts
+    this.penaltyDelay = 5000; // 5 seconds delay for starting penalties
   }
 
   updateBallSpeed() {
@@ -355,14 +358,17 @@ class FollowTheBall {
     this.moveBall();
     this.drawBall();
 
-    let gazeOverBall = this.getCircleProximity();
+    // Start counting penalties only after the delay
+    if (Date.now() - this.startTime >= this.penaltyDelay) {
+      let gazeOverBall = this.getCircleProximity();
 
-    if (gazeOverBall) {
-      this.handImage.src = "./assets/images/facepunch.webp";
-    } else {
-      this.handImage.src =
-        "./assets/images/raised_hand_with_fingers_splayed.webp";
-      this.game.addPenaltyGame(3);
+      if (gazeOverBall) {
+        this.handImage.src = "./assets/images/facepunch.webp";
+      } else {
+        this.handImage.src =
+          "./assets/images/raised_hand_with_fingers_splayed.webp";
+        this.game.addPenaltyGame(3); // Add penalty if no gaze
+      }
     }
   }
 }
@@ -712,9 +718,7 @@ class GameSystem {
       // Start mailgame on Day 2
       console.log("Starting mail challenge.");
       setTimeout(() => {
-        alertChallenge(
-          "To remove the mails, send them through the top right bin"
-        );
+        alertChallenge("To remove the mails, drag them to the top right bin");
       }, 2000);
       mailgame.addNewMail(); // Start with one mail
       mailgame.startMailSpawnTimer();
@@ -885,7 +889,6 @@ function setup() {
 // A function to run when we get any errors and the results
 function gotResult(results) {
   // The results are in an array ordered by confidence
-  console.log(results);
 
   predictedWord = results[0].label;
 }
@@ -905,6 +908,15 @@ function startGame() {
 
 function draw() {
   background(220);
+  video.loadPixels();
+  for (let i = 0; i < video.pixels.length; i += 4) {
+    let r = video.pixels[i]; // Red channel (assuming grayscale based on red)
+    video.pixels[i] = r; // Red
+    video.pixels[i + 1] = r; // Green
+    video.pixels[i + 2] = r; // Blue
+    // Alpha (i+3) remains unchanged
+  }
+  video.updatePixels();
   image(video, 0, 0, width, (width * video.height) / video.width);
 
   startGame();
