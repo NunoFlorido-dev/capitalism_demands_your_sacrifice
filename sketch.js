@@ -74,6 +74,9 @@ class FaceTracker {
         ) {
           this.alertTriggeredOnScreen = "SLEEPY WORKER, WAKE UP!";
           this.game.addPenaltyAlert(2); // Add points for alert
+          if (this.alertTriggeredOnScreen) {
+            this.startAlerting("OPEN YOUR EYES!");
+          }
         }
       } else {
         this.eyesClosedStartTime = null;
@@ -89,6 +92,9 @@ class FaceTracker {
         ) {
           this.alertTriggeredOnScreen = "THE WORK IS ON THE COMPUTER, DUMMY!";
           this.game.addPenaltyAlert(2); // Add points for alert
+          if (this.alertTriggeredOnScreen) {
+            this.startAlerting("LOOK AT THE SCREEN!");
+          }
         }
       } else {
         this.faceTurnedStartTime = null;
@@ -104,6 +110,9 @@ class FaceTracker {
         ) {
           this.alertTriggeredOnScreen = "STOP SCROLLING, GET WORKING!";
           this.game.addPenaltyAlert(2); // Add points for alert
+          if (this.alertTriggeredOnScreen) {
+            this.startAlerting("STOP LOOKING AT THE PHONE!");
+          }
         }
       } else {
         this.faceDownStartTime = null;
@@ -119,6 +128,9 @@ class FaceTracker {
         ) {
           this.alertTriggeredOnScreen = "BE FOCUSED AND RETURN TO WORK!";
           this.game.addPenaltyAlert(2); // Add points for alert
+          if (this.alertTriggeredOnScreen) {
+            this.startAlerting("LOOK AT THE SCREEN!");
+          }
         }
       } else {
         this.faceUpStartTime = null;
@@ -137,6 +149,9 @@ class FaceTracker {
         this.alertTriggeredOffScreen =
           "YOU MAY ONLY LEAVE WHEN THE WORK IS DONE!";
         this.game.addPenaltyAlert(4); // More points for leaving screen
+        if (this.alertTriggeredOffScreen) {
+          this.startAlerting("DON'T LEAVE YOUR COMPUTER WHILE WORKING!");
+        }
       }
     }
 
@@ -144,10 +159,13 @@ class FaceTracker {
 
     if (this.alertTriggeredOnScreen || this.alertTriggeredOffScreen) {
       this.alertOpacity = lerp(this.alertOpacity, oscillatingOpacity, 0.1);
+      this.startBeeping();
     } else {
       this.alertOpacity = lerp(this.alertOpacity, 0, 0.1);
+      this.stopBeeping();
     }
   }
+
   drawAlerts() {
     if (this.alertOpacity > 1) {
       fill(255, 0, 0, this.alertOpacity);
@@ -220,6 +238,33 @@ class FaceTracker {
       console.error("Left or right pupil data is missing");
       this.gazeX = null;
       this.gazeY = null;
+    }
+  }
+
+  startBeeping() {
+    if (!this.isBeeping) {
+      this.isBeeping = true;
+      this.beep.play();
+    }
+  }
+
+  stopBeeping() {
+    if (this.isBeeping) {
+      this.isBeeping = false;
+      this.beep.stop();
+    }
+  }
+
+  startAlerting(word) {
+    if (!this.isAlerting) {
+      this.isAlerting = true;
+      alertChallenge(word);
+    }
+  }
+
+  stopAlerting(word) {
+    if (this.isAlerting) {
+      this.isAlerting = false;
     }
   }
 }
