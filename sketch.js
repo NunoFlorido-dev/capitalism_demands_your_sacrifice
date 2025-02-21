@@ -563,11 +563,19 @@ class TrashTheMails {
       rect1.top > rect2.bottom
     );
   }
-
   setRandomPositions() {
-    const objects = [this.mail, this.outbox];
+    const objects = [this.mail]; // Only move mail
     const positions = [];
     const minDistance = 100;
+
+    // Position outbox in the bottom-right corner
+    const outboxX = window.innerWidth - 150; // Adjust as needed
+    const outboxY = window.innerHeight - 100; // Adjust as needed
+    this.positionElements(this.outbox, outboxX, outboxY);
+
+    // Store outbox position to avoid overlap
+    const outboxPos = { x: outboxX, y: outboxY };
+    positions.push(outboxPos);
 
     function getRandomPosition() {
       return {
