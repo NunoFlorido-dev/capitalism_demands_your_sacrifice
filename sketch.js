@@ -398,12 +398,12 @@ class SayTheWords {
     ];
 
     this.wordQuestions = {
-      Boss: "Who's the best?",
-      Work: "What do we do here?",
-      Coworker: "Who do you work with?",
-      Shareholder: "Who owns the company?",
-      Profit: "What do we strive for?",
-      Company: "Where do you work?",
+      Boss: "Say who's the best",
+      Work: "Say what do we do here",
+      Coworker: "Say who do you work with",
+      Shareholder: "Say who owns the company",
+      Profit: "Say what do we strive for",
+      Company: "Say where do you work",
     };
 
     this.weirdWords = [
@@ -415,8 +415,8 @@ class SayTheWords {
         word: "DORRREEEEPSIAA",
         question: "What do you want for your family?",
       },
-      { word: "GUPTLOOOOTZAA", question: "Are you happy?" },
-      { word: "CRRPSOOOBCHIA", question: "You are a good person, right?" },
+      { word: "GUPTLOOOOTZAA", question: "Say if you are happy" },
+      { word: "CRRPSOOOBCHIA", question: "Say if you are a good person" },
     ];
 
     this.currentWord = "";
