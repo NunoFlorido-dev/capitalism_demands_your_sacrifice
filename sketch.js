@@ -379,6 +379,7 @@ class SayTheWords {
     // Word text (Will grow dynamically)
     this.wordDisplay = document.createElement("p");
     this.wordDisplay.id = "word_display";
+    this.wordDisplay.style.color = "#edde3b";
     this.wordDisplay.style.margin = "10px 0 0 0";
     this.wordDisplay.style.fontSize = "72px";
     this.wordDisplay.style.transition = "font-size 0.1s ease-out"; // Smooth scaling
@@ -409,14 +410,17 @@ class SayTheWords {
     this.weirdWords = [
       {
         word: "BABJEEBZIGUAAA",
-        question: "How do you see yourself in the future?",
+        question: "You won't achieve anything",
       },
       {
         word: "DORRREEEEPSIAA",
-        question: "What do you want for your family?",
+        question: "You will never be successful in my company",
       },
-      { word: "GUPTLOOOOTZAA", question: "Say if you are happy" },
-      { word: "CRRPSOOOBCHIA", question: "Say if you are a good person" },
+      { word: "GUPTLOOOOTZAA", question: "You won't know this one" },
+      {
+        word: "CRRPSOOOBCHIA",
+        question: "You know you will be fired, don't you?",
+      },
     ];
 
     this.currentWord = "";
@@ -498,24 +502,27 @@ class SayTheWords {
 class TrashTheMails {
   constructor(game, beep) {
     this.game = game;
-    this.mail = this.createMailElement(); // Dynamically create the mail element
-    this.outbox = document.getElementById("outbox_tray"); // Static outbox element
-    this.item = this.mail;
-    this.dragging = false;
+    this.mails = []; // Store multiple mail elements
+    this.outbox = document.getElementById("outbox_tray");
+    this.draggingMail = null;
     this.timerId = null;
-
+    this.spawnInterval = 5000; // Time before adding a new mail
     this.beep = beep;
-    this.time = this.getChallengeTime(); // Set time based on game progression
 
-    this.mail.style.display = "block";
     this.outbox.style.display = "block";
     this.outbox.style.left = "89.25%";
     this.outbox.style.top = "1%";
-
-    this.initDrag();
   }
 
-  // Create the mail element dynamically
+  // Create and add a new mail
+  addNewMail() {
+    const mail = this.createMailElement();
+    this.mails.push(mail);
+    this.initDrag(mail);
+    this.setRandomPosition(mail);
+  }
+
+  // Create mail element dynamically
   createMailElement() {
     const mail = document.createElement("div");
     const img = document.createElement("img");
@@ -524,8 +531,8 @@ class TrashTheMails {
     img.style.height = "100%";
     img.draggable = false;
     mail.appendChild(img);
-    mail.classList.add("mail"); // Add a class for styling if needed
-    mail.style.position = "absolute"; // Position it absolutely for drag and drop
+    mail.classList.add("mail");
+    mail.style.position = "absolute";
     mail.style.width = "80px";
     mail.style.height = "80px";
     mail.style.zIndex = "3";
@@ -534,45 +541,42 @@ class TrashTheMails {
     return mail;
   }
 
-  // Initialize drag events for mail
-  initDrag() {
-    this.mail.addEventListener("mousedown", (e) => this.startDrag(e));
+  // Initialize drag events for each mail
+  initDrag(mail) {
+    mail.addEventListener("mousedown", (e) => this.startDrag(e, mail));
     document.addEventListener("mouseup", () => this.stopDrag());
     document.addEventListener("mousemove", (e) => this.drag(e));
   }
 
-  startDrag(event) {
-    if (this.mail.style.display !== "block") return; // Prevent drag before visible
-
-    this.dragging = true;
-    this.offsetX = event.clientX - this.mail.getBoundingClientRect().left;
-    this.offsetY = event.clientY - this.mail.getBoundingClientRect().top;
-
-    if (this.timerId) {
-      clearTimeout(this.timerId);
-      this.timerId = null;
-    }
+  startDrag(event, mail) {
+    this.draggingMail = mail;
+    this.offsetX = event.clientX - mail.getBoundingClientRect().left;
+    this.offsetY = event.clientY - mail.getBoundingClientRect().top;
   }
 
   stopDrag() {
-    this.dragging = false;
-    const itemBounds = this.mail.getBoundingClientRect();
+    if (!this.draggingMail) return;
+
+    const itemBounds = this.draggingMail.getBoundingClientRect();
     const outboxBounds = this.outbox.getBoundingClientRect();
 
-    console.log("Dragging stopped.");
-
     if (this.isOverlapping(itemBounds, outboxBounds)) {
-      console.log("Dropped in OUTBOX.");
-      this.restartChallenge();
-    } else {
-      console.log("Item was not placed in the outbox.");
+      console.log("Mail added to OUTBOX.");
+      this.draggingMail.remove(); // Remove mail from DOM
+      this.mails = this.mails.filter((mail) => mail !== this.draggingMail); // Remove from list
+
+      if (this.mails.length === 0) {
+        console.log("All mails cleared! Resetting challenge.");
+        this.restartChallenge();
+      }
     }
+    this.draggingMail = null;
   }
 
   drag(event) {
-    if (this.dragging) {
-      this.mail.style.left = `${event.clientX - this.offsetX}px`;
-      this.mail.style.top = `${event.clientY - this.offsetY}px`;
+    if (this.draggingMail) {
+      this.draggingMail.style.left = `${event.clientX - this.offsetX}px`;
+      this.draggingMail.style.top = `${event.clientY - this.offsetY}px`;
     }
   }
 
@@ -585,90 +589,26 @@ class TrashTheMails {
     );
   }
 
-  setRandomPositions() {
-    const objects = [this.mail]; // Only move mail
-    const positions = [];
-    const minDistance = 100;
-
-    // Position outbox in the bottom-right corner (outbox is static)
-    const outboxX = this.outbox.offsetLeft; // Use the static position of the outbox
-    const outboxY = this.outbox.offsetTop;
-    this.positionElements(this.outbox, outboxX, outboxY);
-
-    // Store outbox position to avoid overlap
-    const outboxPos = { x: outboxX, y: outboxY };
-    positions.push(outboxPos);
-
-    function getRandomPosition() {
-      return {
-        x: Math.random() * (window.innerWidth - 150),
-        y: Math.random() * (window.innerHeight - 150),
-      };
-    }
-
-    function isFarEnough(pos) {
-      return positions.every(
-        (p) => Math.hypot(pos.x - p.x, pos.y - p.y) > minDistance
-      );
-    }
-
-    objects.forEach((obj) => {
-      let pos;
-      do {
-        pos = getRandomPosition();
-      } while (!isFarEnough(pos));
-      positions.push(pos);
-      this.positionElements(obj, pos.x, pos.y);
-    });
+  setRandomPosition(element) {
+    element.style.left = `${Math.random() * (window.innerWidth - 150)}px`;
+    element.style.top = `${Math.random() * (window.innerHeight - 150)}px`;
   }
 
-  positionElements(element, x, y) {
-    element.style.left = `${x}px`;
-    element.style.top = `${y}px`;
-  }
-
-  getChallengeTime() {
-    let seconds = this.game.getTimeInSeconds();
-
-    if (seconds < 30) {
-      return 5000; // Easy (5 seconds)
-    } else if (seconds < 60) {
-      return 4000; // Medium (4 seconds)
-    } else if (seconds < 90) {
-      return 3000; // Hard (3 seconds)
-    } else {
-      return 2000; // Extreme (2 seconds)
-    }
-  }
-
-  timer() {
-    this.setRandomPositions();
-    this.time = this.getChallengeTime(); // Adjust time dynamically
-    if (this.timerId) clearTimeout(this.timerId);
-
-    this.timerId = setTimeout(() => {
-      console.log("Time ran out! Penalty applied.");
-      this.beep.play();
-      this.game.addPenaltyGame(4);
-      this.restartChallenge();
-    }, this.time);
+  startMailSpawnTimer() {
+    this.timerId = setInterval(() => {
+      if (this.mails.length > 0) {
+        console.log("Time ran out! Adding a new mail.");
+        this.addNewMail();
+      }
+    }, this.spawnInterval);
   }
 
   restartChallenge() {
-    if (this.timerId) clearTimeout(this.timerId);
-
-    // Ensure elements remain visible
-    if (this.mail.style.display !== "block") {
-      console.log("Mail was hidden unexpectedly, restoring visibility.");
-      this.mail.style.display = "block";
-    }
-    if (this.outbox.style.display !== "block") {
-      console.log("Outbox was hidden unexpectedly, restoring visibility.");
-      this.outbox.style.display = "block";
-    }
-
-    this.setRandomPositions();
-    this.timer();
+    if (this.timerId) clearInterval(this.timerId);
+    this.mails.forEach((mail) => mail.remove());
+    this.mails = [];
+    this.addNewMail();
+    this.startMailSpawnTimer();
   }
 
   playChallenge() {
@@ -726,31 +666,34 @@ class GameSystem {
   }
 
   increaseDifficulty() {
-    let seconds = this.getTimeInSeconds();
+    let day = this.getDay(); // Get current game day
 
-    // Difficulty scaling
-    if (seconds >= 30 && seconds < 60) {
+    // Difficulty scaling based on time
+    if (day === 1) {
       this.baseSpeed = 1.5;
-    } else if (seconds >= 60 && seconds < 90) {
+    } else if (day === 2) {
       this.baseSpeed = 2;
-    } else if (seconds >= 90) {
+    } else if (day >= 3) {
       this.baseSpeed = 3;
     }
 
     // Prevent redundant challenge restarts
-    if (seconds === 30 && !this.wordChallengeStarted) {
+    if (this.getTimeInSeconds() >= 30 && !this.wordChallengeStarted) {
       wordgame.startWordChallenge();
       this.wordChallengeStarted = true;
     }
 
-    if (seconds === 60 && !this.mailChallengeStarted) {
+    if (day === 1 && !this.mailChallengeStarted) {
+      // Start mailgame on Day 2
       console.log("Starting mail challenge.");
+      mailgame.addNewMail(); // Start with one mail
+      mailgame.startMailSpawnTimer();
       mailgame.playChallenge();
       this.ballSpeedMultiplier = 10;
       this.mailChallengeStarted = true;
     }
 
-    if (seconds === 90 && !this.finalDifficultyStarted) {
+    if (day === 3 && !this.finalDifficultyStarted) {
       this.ballSpeedMultiplier = 20;
       this.finalDifficultyStarted = true;
     }

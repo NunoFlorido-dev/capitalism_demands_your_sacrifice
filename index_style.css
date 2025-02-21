@@ -2,6 +2,7 @@ html, body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 canvas {
@@ -108,7 +109,7 @@ canvas {
 
 
 #word_display{
-  color: #317cf5;
+  color: #edde3b;
   font-family: "OT Neue Montreal Bold", sans-serif;
   font-size: 6rem;
   max-width: none; /* Ensure no width limit */
@@ -118,7 +119,7 @@ canvas {
 
 #question_display{
   position: fixed;
-  color: #317cf5;
+  color: #edde3b;
   top: 25%;
   font-family: "OT Neue Montreal Regular", sans-serif;
   font-size: 3rem;
