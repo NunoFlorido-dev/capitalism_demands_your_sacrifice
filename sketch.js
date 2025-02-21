@@ -19,6 +19,8 @@ class FaceTracker {
     this.durationThresholdOffScreen = 4000; // 4s
 
     this.beep = beep;
+    this.isBeeping = false; // Track if beep is playing
+    this.isAlerting = false; // Track if alertChallenge is active
 
     this.hand = document.getElementById("hand");
   }
@@ -71,11 +73,7 @@ class FaceTracker {
           this.durationThresholdOnScreen
         ) {
           this.alertTriggeredOnScreen = "SLEEPY WORKER, WAKE UP!";
-          this.beep.play();
           this.game.addPenaltyAlert(2); // Add points for alert
-          setTimeout(() => {
-            alertChallenge("OPEN YOUR EYES!");
-          }, 1000);
         }
       } else {
         this.eyesClosedStartTime = null;
@@ -90,11 +88,7 @@ class FaceTracker {
           this.durationThresholdOnScreen
         ) {
           this.alertTriggeredOnScreen = "THE WORK IS ON THE COMPUTER, DUMMY!";
-          this.beep.play();
           this.game.addPenaltyAlert(2); // Add points for alert
-          setTimeout(() => {
-            alertChallenge("LOOK AT THE SCREEN!");
-          }, 1000);
         }
       } else {
         this.faceTurnedStartTime = null;
@@ -109,11 +103,7 @@ class FaceTracker {
           this.durationThresholdOnScreen
         ) {
           this.alertTriggeredOnScreen = "STOP SCROLLING, GET WORKING!";
-          this.beep.play();
           this.game.addPenaltyAlert(2); // Add points for alert
-          setTimeout(() => {
-            alertChallenge("STOP LOOKING AT THE PHONE!");
-          }, 1000);
         }
       } else {
         this.faceDownStartTime = null;
@@ -128,11 +118,7 @@ class FaceTracker {
           this.durationThresholdOnScreen
         ) {
           this.alertTriggeredOnScreen = "BE FOCUSED AND RETURN TO WORK!";
-          this.beep.play();
           this.game.addPenaltyAlert(2); // Add points for alert
-          setTimeout(() => {
-            alertChallenge("LOOK AT THE SCREEN!");
-          }, 1000);
         }
       } else {
         this.faceUpStartTime = null;
@@ -150,11 +136,7 @@ class FaceTracker {
       ) {
         this.alertTriggeredOffScreen =
           "YOU MAY ONLY LEAVE WHEN THE WORK IS DONE!";
-        this.beep.play();
         this.game.addPenaltyAlert(4); // More points for leaving screen
-        setTimeout(() => {
-          alertChallenge("GET BACK TO WORK!");
-        }, 1000);
       }
     }
 
@@ -166,7 +148,6 @@ class FaceTracker {
       this.alertOpacity = lerp(this.alertOpacity, 0, 0.1);
     }
   }
-
   drawAlerts() {
     if (this.alertOpacity > 1) {
       fill(255, 0, 0, this.alertOpacity);

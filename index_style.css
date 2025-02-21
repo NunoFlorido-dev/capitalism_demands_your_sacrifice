@@ -183,3 +183,17 @@ canvas {
   font-family: "OT Neue Montreal Regular", sans-serif;
   font-size: 2rem;
 }
+
+#p5_loading{
+  width: 100vw;
+  height: 100vh;
+  background-color: #1b6ef5;
+  display: flex;
+  justify-content: center;
+  text-align: center;
+  align-items: center;
+  font-family: "OT Neue Montreal Regular", sans-serif;
+  font-size: 4rem;
+  color: white;
+}
+
