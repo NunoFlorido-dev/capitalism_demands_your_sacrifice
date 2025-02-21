@@ -498,8 +498,8 @@ class SayTheWords {
 class TrashTheMails {
   constructor(game, beep) {
     this.game = game;
-    this.mail = select("#email");
-    this.outbox = select("#outbox_tray");
+    this.mail = this.createMailElement(); // Dynamically create the mail element
+    this.outbox = document.getElementById("outbox_tray"); // Static outbox element
     this.item = this.mail;
     this.dragging = false;
     this.timerId = null;
@@ -507,25 +507,46 @@ class TrashTheMails {
     this.beep = beep;
     this.time = this.getChallengeTime(); // Set time based on game progression
 
-    this.mail.style("display", "block");
-    this.outbox.style("display", "block");
+    this.mail.style.display = "block";
+    this.outbox.style.display = "block";
+    this.outbox.style.left = "89.25%";
+    this.outbox.style.top = "1%";
 
     this.initDrag();
   }
 
+  // Create the mail element dynamically
+  createMailElement() {
+    const mail = document.createElement("div");
+    const img = document.createElement("img");
+    img.src = "./assets/images/email.webp";
+    img.style.width = "100%";
+    img.style.height = "100%";
+    img.draggable = false;
+    mail.appendChild(img);
+    mail.classList.add("mail"); // Add a class for styling if needed
+    mail.style.position = "absolute"; // Position it absolutely for drag and drop
+    mail.style.width = "80px";
+    mail.style.height = "80px";
+    mail.style.zIndex = "3";
+    mail.style.cursor = "pointer";
+    document.body.appendChild(mail);
+    return mail;
+  }
+
   // Initialize drag events for mail
   initDrag() {
-    this.mail.mousePressed((e) => this.startDrag(e));
-    this.mail.mouseReleased(() => this.stopDrag());
+    this.mail.addEventListener("mousedown", (e) => this.startDrag(e));
+    document.addEventListener("mouseup", () => this.stopDrag());
     document.addEventListener("mousemove", (e) => this.drag(e));
   }
 
   startDrag(event) {
-    if (this.mail.style("display") !== "block") return; // Prevent drag before visible
+    if (this.mail.style.display !== "block") return; // Prevent drag before visible
 
     this.dragging = true;
-    this.offsetX = event.clientX - this.mail.position().x;
-    this.offsetY = event.clientY - this.mail.position().y;
+    this.offsetX = event.clientX - this.mail.getBoundingClientRect().left;
+    this.offsetY = event.clientY - this.mail.getBoundingClientRect().top;
 
     if (this.timerId) {
       clearTimeout(this.timerId);
@@ -535,8 +556,8 @@ class TrashTheMails {
 
   stopDrag() {
     this.dragging = false;
-    const itemBounds = this.mail.elt.getBoundingClientRect();
-    const outboxBounds = this.outbox.elt.getBoundingClientRect();
+    const itemBounds = this.mail.getBoundingClientRect();
+    const outboxBounds = this.outbox.getBoundingClientRect();
 
     console.log("Dragging stopped.");
 
@@ -550,8 +571,8 @@ class TrashTheMails {
 
   drag(event) {
     if (this.dragging) {
-      this.mail.style("left", `${event.clientX - this.offsetX}px`);
-      this.mail.style("top", `${event.clientY - this.offsetY}px`);
+      this.mail.style.left = `${event.clientX - this.offsetX}px`;
+      this.mail.style.top = `${event.clientY - this.offsetY}px`;
     }
   }
 
@@ -563,14 +584,15 @@ class TrashTheMails {
       rect1.top > rect2.bottom
     );
   }
+
   setRandomPositions() {
     const objects = [this.mail]; // Only move mail
     const positions = [];
     const minDistance = 100;
 
-    // Position outbox in the bottom-right corner
-    const outboxX = window.innerWidth - 150; // Adjust as needed
-    const outboxY = window.innerHeight - 100; // Adjust as needed
+    // Position outbox in the bottom-right corner (outbox is static)
+    const outboxX = this.outbox.offsetLeft; // Use the static position of the outbox
+    const outboxY = this.outbox.offsetTop;
     this.positionElements(this.outbox, outboxX, outboxY);
 
     // Store outbox position to avoid overlap
@@ -601,9 +623,8 @@ class TrashTheMails {
   }
 
   positionElements(element, x, y) {
-    element.style("position", "absolute");
-    element.style("left", `${x}px`);
-    element.style("top", `${y}px`);
+    element.style.left = `${x}px`;
+    element.style.top = `${y}px`;
   }
 
   getChallengeTime() {
@@ -637,13 +658,13 @@ class TrashTheMails {
     if (this.timerId) clearTimeout(this.timerId);
 
     // Ensure elements remain visible
-    if (this.mail.style("display") !== "block") {
+    if (this.mail.style.display !== "block") {
       console.log("Mail was hidden unexpectedly, restoring visibility.");
-      this.mail.style("display", "block");
+      this.mail.style.display = "block";
     }
-    if (this.outbox.style("display") !== "block") {
+    if (this.outbox.style.display !== "block") {
       console.log("Outbox was hidden unexpectedly, restoring visibility.");
-      this.outbox.style("display", "block");
+      this.outbox.style.display = "block";
     }
 
     this.setRandomPositions();
@@ -724,8 +745,6 @@ class GameSystem {
 
     if (seconds === 60 && !this.mailChallengeStarted) {
       console.log("Starting mail challenge.");
-      mailgame.mail.style("display", "block");
-      mailgame.outbox.style("display", "block");
       mailgame.playChallenge();
       this.ballSpeedMultiplier = 10;
       this.mailChallengeStarted = true;
@@ -856,9 +875,6 @@ function setup() {
   ballgame = new FollowTheBall(tracker, game);
   wordgame = new SayTheWords(classifier, game, wrongSound);
   mailgame = new TrashTheMails(game, wrongSound);
-
-  mailgame.mail.style("display", "none");
-  mailgame.outbox.style("display", "none");
 
   faceMesh.detectStart(video, (results) => {
     tracker.updateFaces(results);
