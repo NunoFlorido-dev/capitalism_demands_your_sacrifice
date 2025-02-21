@@ -73,6 +73,9 @@ class FaceTracker {
           this.alertTriggeredOnScreen = "SLEEPY WORKER, WAKE UP!";
           this.beep.play();
           this.game.addPenaltyAlert(2); // Add points for alert
+          setTimeout(() => {
+            alertChallenge("OPEN YOUR EYES!");
+          }, 1000);
         }
       } else {
         this.eyesClosedStartTime = null;
@@ -89,6 +92,9 @@ class FaceTracker {
           this.alertTriggeredOnScreen = "THE WORK IS ON THE COMPUTER, DUMMY!";
           this.beep.play();
           this.game.addPenaltyAlert(2); // Add points for alert
+          setTimeout(() => {
+            alertChallenge("LOOK AT THE SCREEN!");
+          }, 1000);
         }
       } else {
         this.faceTurnedStartTime = null;
@@ -105,6 +111,9 @@ class FaceTracker {
           this.alertTriggeredOnScreen = "STOP SCROLLING, GET WORKING!";
           this.beep.play();
           this.game.addPenaltyAlert(2); // Add points for alert
+          setTimeout(() => {
+            alertChallenge("STOP LOOKING AT THE PHONE!");
+          }, 1000);
         }
       } else {
         this.faceDownStartTime = null;
@@ -121,6 +130,9 @@ class FaceTracker {
           this.alertTriggeredOnScreen = "BE FOCUSED AND RETURN TO WORK!";
           this.beep.play();
           this.game.addPenaltyAlert(2); // Add points for alert
+          setTimeout(() => {
+            alertChallenge("LOOK AT THE SCREEN!");
+          }, 1000);
         }
       } else {
         this.faceUpStartTime = null;
@@ -140,6 +152,9 @@ class FaceTracker {
           "YOU MAY ONLY LEAVE WHEN THE WORK IS DONE!";
         this.beep.play();
         this.game.addPenaltyAlert(4); // More points for leaving screen
+        setTimeout(() => {
+          alertChallenge("GET BACK TO WORK!");
+        }, 1000);
       }
     }
 
@@ -685,7 +700,9 @@ class GameSystem {
     // Prevent redundant challenge restarts
     if (this.getTimeInSeconds() >= 30 && !this.wordChallengeStarted) {
       setTimeout(() => {
-        alertChallenge("Say the words on the screen!");
+        alertChallenge(
+          "Watch out for the words! Say them to remove from the screen"
+        );
       }, 2000);
       wordgame.startWordChallenge();
       this.wordChallengeStarted = true;
@@ -695,7 +712,9 @@ class GameSystem {
       // Start mailgame on Day 2
       console.log("Starting mail challenge.");
       setTimeout(() => {
-        alertChallenge("You need to put the mails on the top right bin!");
+        alertChallenge(
+          "To remove the mails, send them through the top right bin"
+        );
       }, 2000);
       mailgame.addNewMail(); // Start with one mail
       mailgame.startMailSpawnTimer();
