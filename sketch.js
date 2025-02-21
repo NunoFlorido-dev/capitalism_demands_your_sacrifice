@@ -254,6 +254,11 @@ class FollowTheBall {
     }
 
     this.handImage = document.querySelector("#hand img"); // Get the hand image element
+
+    // Example: Call alertChallenge when a new challenge begins
+    setTimeout(() => {
+      alertChallenge("Follow the money with your head's hand!");
+    }, 2000);
   }
 
   updateBallSpeed() {
@@ -370,7 +375,7 @@ class SayTheWords {
     this.questionDisplay = document.createElement("p");
     this.questionDisplay.id = "question_display";
     this.questionDisplay.style.position = "fixed";
-    this.questionDisplay.style.color = "#edde3b";
+    this.questionDisplay.style.color = "#3bdff5";
     this.questionDisplay.style.margin = "0";
     this.questionDisplay.style.marginBottom = "10%";
     this.questionDisplay.style.fontSize = "2.5rem"; // Slightly smaller for clarity
@@ -461,7 +466,7 @@ class SayTheWords {
     this.currentWord = newWord;
     this.wordDisplay.textContent = this.currentWord;
     this.questionDisplay.textContent = this.wordQuestions[this.currentWord];
-    this.wordDisplay.style.color = "#317cf5";
+    this.wordDisplay.style.color = "#edde3b";
     this.wordDisplay.style.fontSize = "72px";
     this.fontSize = 72;
 
@@ -634,7 +639,7 @@ class GameSystem {
     this.alertFlashStartTime = null;
 
     // Game Timer
-    this.startTime = millis(); // Game start time
+    this.startTime = Date.now(); // Game start time
     this.gameTime = 0; // Tracks elapsed time in milliseconds
     this.baseSpeed = 1; // Base difficulty multiplier
 
@@ -651,7 +656,7 @@ class GameSystem {
   }
 
   updateTime() {
-    this.gameTime = millis() - this.startTime;
+    this.gameTime = Date.now() - this.startTime;
     this.increaseDifficulty();
   }
 
@@ -679,6 +684,9 @@ class GameSystem {
 
     // Prevent redundant challenge restarts
     if (this.getTimeInSeconds() >= 30 && !this.wordChallengeStarted) {
+      setTimeout(() => {
+        alertChallenge("Say the words on the screen!");
+      }, 2000);
       wordgame.startWordChallenge();
       this.wordChallengeStarted = true;
     }
@@ -686,6 +694,9 @@ class GameSystem {
     if (day === 1 && !this.mailChallengeStarted) {
       // Start mailgame on Day 2
       console.log("Starting mail challenge.");
+      setTimeout(() => {
+        alertChallenge("You need to put the mails on the top right bin!");
+      }, 2000);
       mailgame.addNewMail(); // Start with one mail
       mailgame.startMailSpawnTimer();
       mailgame.playChallenge();
@@ -704,7 +715,7 @@ class GameSystem {
   }
 
   addPenaltyAlert(points) {
-    let currentTime = millis();
+    let currentTime = Date.now();
 
     if (currentTime - this.lastPenaltyTime >= this.penaltyTimeAlert) {
       this.score = Math.min(this.score + points, this.maxScore);
@@ -771,7 +782,31 @@ class GameSystem {
     if (this.dayDisplay) {
       this.dayDisplay.textContent = `Day ${days + 1}`; // Day 1 starts at 0 seconds
     }
+    // Redirect when score reaches max
+    if (this.score >= this.maxScore) {
+      setTimeout(() => {
+        window.location.href = `gameover.html?days=${days}&hours=${hours}&minutes=${minutes}`; // Redirect to game over page with time
+      }, 1000); // Small delay before redirect
+    }
   }
+}
+
+/* **************************************************************************************** */
+function alertChallenge(instruction) {
+  pingSound.play();
+  const instructionText = document.getElementById("instruction_text");
+
+  // Set instruction text
+  instructionText.innerText = instruction;
+  instructionText.style.display = "flex";
+
+  // Hide instruction after 5 seconds
+  setTimeout(() => {
+    instructionText.style.display = "none";
+  }, 5000);
+
+  // Start challenge logic here
+  console.log("Challenge started!");
 }
 
 /* **************************************************************************************** */
@@ -782,6 +817,7 @@ let classifier;
 let predictedWord = "";
 
 let wrongSound;
+let pingSound;
 
 let tracker;
 let video;
@@ -805,6 +841,7 @@ function preload() {
   );
 
   wrongSound = loadSound("./assets/sound/buzzer-or-wrong-answer-20582.mp3");
+  pingSound = loadSound("./assets/sound/ping-82822.mp3");
 }
 
 function setup() {
@@ -838,6 +875,7 @@ function startGame() {
   if (millis() >= 3000) {
     game.update();
   }
+
   tracker.detect();
   tracker.drawAlerts();
   game.drawAlerts();

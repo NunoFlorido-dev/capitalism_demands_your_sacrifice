@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>capitalism demands your sacrifice</title>
+    <link rel="stylesheet" type="text/css" href="gameover.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Game Over</h1>
+      <p>Your final score: <span id="timeDisplay"></span></p>
+      <button onclick="restartGame()">Play Again</button>
+    </div>
+
+    <script>
+      // Get query parameters from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const days = urlParams.get("days");
+      const hours = urlParams.get("hours");
+      const minutes = urlParams.get("minutes");
+
+      console.log(days);
+      console.log(hours);
+      console.log(minutes);
+
+      // Display the time on the game-over screen
+      document.getElementById(
+        "timeDisplay"
+      ).innerText = `You lasted: ${days} days, ${hours} hours, ${minutes} minutes`;
+
+      function restartGame() {
+        window.location.href = "index.html"; // Redirect to main game page
+      }
+    </script>
+  </body>
+</html>

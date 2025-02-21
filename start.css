@@ -2,7 +2,6 @@ html, body {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    background-color: #1c1c1c;
   }
   
   canvas {
@@ -14,3 +13,112 @@ html, body {
     src: url(./assets/fonts/OTNeueMontreal-MediumExtraSqueezed.woff);
   }
   
+  @font-face {
+    font-family: "OT Neue Montreal Regular";
+    src: url("./assets/fonts/OTNeueMontreal-RegularSqueezed.woff");
+  }
+  
+  @font-face{
+    font-family: "OT Neue Montreal Bold";
+    src: url("./assets/fonts/OTNeueMontreal-BoldSqueezed.woff");
+  }
+
+  body{
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #1b6ef5;
+  }
+  
+.container{
+  display: flex;
+  margin: 20% 10% 20% 10%;
+}
+
+.container .left-container h1{
+  font-family: "OT Neue Montreal Bold", sans-serif;
+  font-size: 3rem;
+  color: white;
+}
+
+.container .left-container p, 
+.container .left-container ul li{
+  font-family: "OT Neue Montreal Regular", sans-serif;
+  font-size: 1.5rem;
+  color: white;
+}
+
+.container .left-container p:first-of-type, 
+.container .left-container ul{
+margin-top: -1.5rem;
+}
+
+.container .left-container p:last-of-type{
+  margin-top: -0.75rem;;
+}
+
+.container .right-container{
+display: flex;
+flex-direction: column;
+justify-content: center;
+align-items: center;
+text-align: center;
+}
+
+.container .right-container h1{
+  font-family: "OT Neue Montreal Bold", sans-serif;
+  line-height: 3.25rem;
+  font-size: 3rem;
+  color: white;
+
+}
+
+.container .right-container button{
+  width: 50%;
+  padding: 0.75rem 1.5rem;
+  font-family: "OT Neue Montreal Regular", sans-serif;
+  font-size: 1.5rem;
+  color: #000;
+  background-color: #edde3b;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  animation: pulse 1.5s infinite;
+}
+
+#mobile-container{
+  display: none;
+}
+
+#mobile-container h1{
+  font-family: "OT Neue Montreal Bold", sans-serif;
+  font-size: 3rem;
+  color: white;
+}
+
+@keyframes pulse {
+  0% {
+    background-color: #edde3b;
+}
+
+50% {
+ background-color: #91881d;
+}
+
+100% {
+  background-color: #edde3b;
+}
+
+}
+
+@media (max-width: 1080px){
+  .container{
+    flex-direction: column;
+  }
+
+
+}

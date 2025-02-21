@@ -7,7 +7,60 @@
     <title>capitalism demands your sacrifice</title>
   </head>
   <body>
-    <div id="p5_loading"></div>
-    <script src="start.js"></script>
+    <div class="container" id="desktop-container">
+      <div class="left-container">
+        <h1>Welcome to Utopia Corp.</h1>
+        <p>
+          Welcome to your first day at Utopia Corp. <br />
+          Because of the importance of your beginning at our company, we
+          developed an exclusive, valuable and hard pallete of work just for
+          you. <br />
+          Please complete all of this tasks. We do not tolerate any misconduct
+          from your objective. <br />
+        </p>
+        <h1>Disclaimer</h1>
+        <ul>
+          <li>
+            Have a good posture with your face always in front of the screen. We
+            appreciate it.
+          </li>
+          <li>Do not close your eyes for too long. We do notice it.</li>
+          <li>Do not look at your phone, we will notice that too.</li>
+          <li>Do not leave your computer when working. It will be noticed.</li>
+        </ul>
+        <p>Keep on working!</p>
+      </div>
+      <div class="right-container">
+        <h1>Press this button to start working</h1>
+        <button onclick="restartGame()">Start Shift</button>
+      </div>
+    </div>
+
+    <div class="container" id="mobile-container">
+      <h1>LEAVE IF YOU ARE ON THE PHONE! WE ONLY ALLOW WORK COMPUTERS HERE!</h1>
+    </div>
+
+    <script>
+      function restartGame() {
+        window.location.href = "index.html"; // Redirect to main game page
+      }
+
+      function hasTouchSupport() {
+        return "ontouchstart" in window || navigator.maxTouchPoints > 0;
+      }
+
+      const desktopContainer = document.getElementById("desktop-container");
+      const mobileContainer = document.getElementById("mobile-container");
+
+      if (hasTouchSupport()) {
+        desktopContainer.style.display = "none";
+        mobileContainer.style.display = "flex";
+        console.log("Mobile device detected");
+      } else {
+        mobileContainer.style.display = "none";
+        desktopContainer.style.display = "flex";
+        console.log("Desktop device detected");
+      }
+    </script>
   </body>
 </html>

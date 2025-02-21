@@ -35,7 +35,7 @@ canvas {
 .score-bar {
   width: 100%;
   height: 100%; /* Start at full height */
-  background-color: #317cf5;
+  background-color: #3bdff5;
   transition: height 0.3s ease-in-out;
 }
 
@@ -69,12 +69,12 @@ canvas {
 }
 
 .info-container div:nth-child(1){
-  color: #317cf5;
+  color: #3bdff5
 }
 
 
 .info-container div:nth-child(2){
-  color: #317cf5;
+  color: #3bdff5
 }
 
 #money_batch{
@@ -119,7 +119,7 @@ canvas {
 
 #question_display{
   position: fixed;
-  color: #edde3b;
+  color: #3bdff5;
   top: 25%;
   font-family: "OT Neue Montreal Regular", sans-serif;
   font-size: 3rem;
@@ -165,3 +165,21 @@ canvas {
   height: 100%;
 }
 
+#instruction_text{
+  position: absolute;
+  left: 50%;
+  top: 15%;
+  transform: translateX(-50%);
+  z-index: 4;
+  padding: 0.75rem 2.5rem;
+  background-color: #edde3b;
+  width: 24rem;
+  height: 4rem;
+  border-radius: 1rem;
+  display: none;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+  font-family: "OT Neue Montreal Regular", sans-serif;
+  font-size: 2rem;
+}
