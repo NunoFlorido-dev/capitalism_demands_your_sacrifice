@@ -7,10 +7,18 @@
     <link rel="stylesheet" type="text/css" href="gameover.css" />
   </head>
   <body>
-    <div class="container">
-      <h1>Game Over</h1>
-      <p>Your final score: <span id="timeDisplay"></span></p>
-      <button onclick="restartGame()">Play Again</button>
+    <div id="desktop-container">
+      <div class="container">
+        <p class="emoji">😂</p>
+        <h1>FIRED!</h1>
+        <p class="score-display">
+          Your job lasted: <span id="timeDisplay"></span>
+        </p>
+        <button onclick="restartGame()">Return to homepage</button>
+      </div>
+    </div>
+    <div id="mobile-container">
+      <h1>LEAVE IF YOU ARE ON THE PHONE! WE ONLY ALLOW WORK COMPUTERS HERE!</h1>
     </div>
 
     <script>
@@ -27,10 +35,27 @@
       // Display the time on the game-over screen
       document.getElementById(
         "timeDisplay"
-      ).innerText = `You lasted: ${days} days, ${hours} hours, ${minutes} minutes`;
+      ).innerText = `${days} days, ${hours} hours, ${minutes} minutes`;
 
       function restartGame() {
-        window.location.href = "index.html"; // Redirect to main game page
+        window.location.href = "start.html"; // Redirect to main game page
+      }
+
+      function hasTouchSupport() {
+        return "ontouchstart" in window || navigator.maxTouchPoints > 0;
+      }
+
+      const desktopContainer = document.getElementById("desktop-container");
+      const mobileContainer = document.getElementById("mobile-container");
+
+      if (hasTouchSupport()) {
+        desktopContainer.style.display = "none";
+        mobileContainer.style.display = "flex";
+        console.log("Mobile device detected");
+      } else {
+        mobileContainer.style.display = "none";
+        desktopContainer.style.display = "flex";
+        console.log("Desktop device detected");
       }
     </script>
   </body>

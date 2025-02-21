@@ -1,0 +1,102 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  canvas {
+    display: block;
+  }
+
+  @font-face {
+    font-family: "OT Neue Montreal Medium Extra";
+    src: url(./assets/fonts/OTNeueMontreal-MediumExtraSqueezed.woff);
+  }
+  
+  @font-face {
+    font-family: "OT Neue Montreal Regular";
+    src: url("./assets/fonts/OTNeueMontreal-RegularSqueezed.woff");
+  }
+  
+  @font-face{
+    font-family: "OT Neue Montreal Bold";
+    src: url("./assets/fonts/OTNeueMontreal-BoldSqueezed.woff");
+  }
+
+
+  body{
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #1b6ef5;
+    text-align: center;
+  }
+
+  .container{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 10% 10% 20% 10%;
+  }
+
+  .container p{
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .container .emoji{
+    font-size: 5rem;
+    margin-bottom: -2rem;
+  }
+
+  .container h1{
+    font-family: "OT Neue Montreal Bold", sans-serif;
+    line-height: 3.25rem;
+    font-size: 3rem;
+    margin-bottom: -.25rem;
+    color: white;
+  }
+
+  .container p{
+  font-family: "OT Neue Montreal Regular", sans-serif;
+  font-size: 1.5rem;
+  color: white;
+}
+
+  .container button{
+    width: 60%;
+    padding: 0.5rem 2rem;
+    font-family: "OT Neue Montreal Regular", sans-serif;
+    font-size: 1.5rem;
+    color: #000;
+    background-color: #edde3b;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    animation: pulse 1.5s infinite;
+  }
+
+  #mobile-container h1{
+    font-family: "OT Neue Montreal Bold", sans-serif;
+    font-size: 3rem;
+    color: white;
+  }
+  
+  @keyframes pulse {
+    0% {
+      background-color: #edde3b;
+  }
+  
+  50% {
+   background-color: #91881d;
+  }
+  
+  100% {
+    background-color: #edde3b;
+  }
+  }  

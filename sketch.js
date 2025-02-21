@@ -15,7 +15,7 @@ class FaceTracker {
     this.faceOffScreenStartTime = null;
 
     // Thresholds
-    this.durationThresholdOnScreen = 1500; // 1.5s
+    this.durationThresholdOnScreen = 1000; // 1.5s
     this.durationThresholdOffScreen = 4000; // 4s
 
     this.beep = beep;
@@ -390,7 +390,7 @@ class SayTheWords {
     this.questionDisplay = document.createElement("p");
     this.questionDisplay.id = "question_display";
     this.questionDisplay.style.position = "fixed";
-    this.questionDisplay.style.color = "#3bdff5";
+    this.questionDisplay.style.color = "#1b6ef5";
     this.questionDisplay.style.margin = "0";
     this.questionDisplay.style.marginBottom = "10%";
     this.questionDisplay.style.fontSize = "2.5rem"; // Slightly smaller for clarity
@@ -745,7 +745,7 @@ class GameSystem {
   }
 
   addPenaltyGame(points) {
-    let currentTime = millis();
+    let currentTime = Date.now();
 
     if (currentTime - this.lastPenaltyTime >= this.penaltyTimeGame) {
       this.score = Math.min(this.score + points, this.maxScore);
