@@ -76,6 +76,7 @@ html, body {
     border: none;
     outline: none;
     box-shadow: none;
+    text-align: center;
     border-radius: 0.5rem;
     cursor: pointer;
     animation: pulse 1.5s infinite;

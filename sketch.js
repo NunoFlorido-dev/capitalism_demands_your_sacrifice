@@ -80,6 +80,7 @@ class FaceTracker {
         }
       } else {
         this.eyesClosedStartTime = null;
+        this.isAlerting = false; // Reset alerting when condition is no longer met
       }
 
       // Check if face is turned sideways
@@ -98,6 +99,7 @@ class FaceTracker {
         }
       } else {
         this.faceTurnedStartTime = null;
+        this.stopAlerting("LOOK AT THE SCREEN!");
       }
 
       // Check if face is looking down
@@ -116,6 +118,7 @@ class FaceTracker {
         }
       } else {
         this.faceDownStartTime = null;
+        this.stopAlerting("STOP LOOKING AT THE PHONE!");
       }
 
       // Check if face is looking up
@@ -134,6 +137,7 @@ class FaceTracker {
         }
       } else {
         this.faceUpStartTime = null;
+        this.stopAlerting("LOOK AT THE SCREEN!");
       }
 
       // Eye gaze tracking
@@ -151,6 +155,8 @@ class FaceTracker {
         this.game.addPenaltyAlert(4); // More points for leaving screen
         if (this.alertTriggeredOffScreen) {
           this.startAlerting("DON'T LEAVE YOUR COMPUTER WHILE WORKING!");
+        } else {
+          this.stopAlerting("DON'T LEAVE YOUR COMPUTER WHILE WORKING!");
         }
       }
     }
@@ -258,7 +264,7 @@ class FaceTracker {
   startAlerting(word) {
     if (!this.isAlerting) {
       this.isAlerting = true;
-      alertChallenge(word);
+      alertChallenge(word, 3000);
     }
   }
 
@@ -296,10 +302,8 @@ class FollowTheBall {
 
     this.handImage = document.querySelector("#hand img"); // Get the hand image element
 
-    // Example: Call alertChallenge when a new challenge begins
-    setTimeout(() => {
-      alertChallenge("Follow the money with your head's hand!");
-    }, 2000);
+    // Call alertChallenge when a new challenge begins
+    alertChallenge("Follow the money with your head's hand!", 6000);
 
     this.startTime = Date.now(); // Store the current time when the game starts
     this.penaltyDelay = 5000; // 5 seconds delay for starting penalties
@@ -731,11 +735,10 @@ class GameSystem {
 
     // Prevent redundant challenge restarts
     if (this.getTimeInSeconds() >= 30 && !this.wordChallengeStarted) {
-      setTimeout(() => {
-        alertChallenge(
-          "Watch out for the words! Say them to remove from the screen"
-        );
-      }, 2000);
+      alertChallenge(
+        "Watch out for the words! Say them to remove from the screen",
+        3000
+      );
       wordgame.startWordChallenge();
       this.wordChallengeStarted = true;
     }
@@ -745,7 +748,8 @@ class GameSystem {
       console.log("Starting mail challenge.");
       setTimeout(() => {
         alertChallenge(
-          "To remove the mails, drag them to the top right outbox"
+          "To remove the mails, drag them to the top right outbox",
+          3000
         );
       }, 2000);
       mailgame.addNewMail(); // Start with one mail
@@ -843,20 +847,24 @@ class GameSystem {
 }
 
 /* **************************************************************************************** */
-function alertChallenge(instruction) {
+let alertActive = false; // Global flag
+
+function alertChallenge(instruction, delay) {
+  if (alertActive) return; // Prevent repeated alerts
+  alertActive = true; // Set flag
+
   pingSound.play();
   const instructionText = document.getElementById("instruction_text");
 
-  // Set instruction text
   instructionText.innerText = instruction;
   instructionText.style.display = "flex";
 
-  // Hide instruction after 5 seconds
+  // Hide instruction after 'delay' ms
   setTimeout(() => {
     instructionText.style.display = "none";
-  }, 5000);
+    alertActive = false; // Reset flag when alert ends
+  }, delay);
 
-  // Start challenge logic here
   console.log("Challenge started!");
 }
 
