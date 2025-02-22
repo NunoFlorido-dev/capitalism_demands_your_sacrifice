@@ -403,6 +403,8 @@ class FollowTheBall {
   }
 }
 
+/* **************************************************************************************** */
+
 class SayTheWords {
   constructor(soundClassifier, game, beep) {
     this.soundClassifier = soundClassifier;
@@ -481,6 +483,7 @@ class SayTheWords {
 
     this.currentWord = "";
     this.fontSize = 72;
+    this.fontIncreaseSize = 125;
     this.isListening = false;
     this.wordStartTime = null;
     this.day = 2;
@@ -530,9 +533,18 @@ class SayTheWords {
   increaseFontSize() {
     if (!this.isListening) return;
 
+    const currentDay = this.game.getDay();
+    if (currentDay === 1) {
+      this.fontIncreaseSize = 95;
+    } else if (currentDay === 2) {
+      this.fontIncreaseSize = 75;
+    } else if (currentDay >= 3) {
+      this.fontIncreaseSize = 65;
+    }
+
     let elapsed = performance.now() - this.wordStartTime;
     let maxFontSize = window.innerWidth * 0.8;
-    let newSize = 72 + Math.pow(elapsed / 100, 1.5);
+    let newSize = 72 + Math.pow(elapsed / this.fontIncreaseSize, 1.5);
     if (newSize > maxFontSize) newSize = maxFontSize;
 
     this.wordDisplay.style.fontSize = `${newSize}px`;
