@@ -165,7 +165,7 @@ class FaceTracker {
 
     if (this.alertTriggeredOnScreen || this.alertTriggeredOffScreen) {
       this.alertOpacity = lerp(this.alertOpacity, oscillatingOpacity, 0.1);
-      this.startBeeping();
+      this.startBeeping("FaceTracker");
     } else {
       this.alertOpacity = lerp(this.alertOpacity, 0, 0.1);
       this.stopBeeping();
@@ -247,17 +247,17 @@ class FaceTracker {
     }
   }
 
-  startBeeping() {
-    if (!this.isBeeping) {
+  startBeeping(source) {
+    if (!this.isBeeping && source === "FaceTracker") {
       this.isBeeping = true;
-      this.beep.play();
+      this.beep.loop(); // Only loop if penalty came from FaceTracker
     }
   }
 
   stopBeeping() {
     if (this.isBeeping) {
       this.isBeeping = false;
-      this.beep.stop();
+      this.beep.stop(); // Stop looping
     }
   }
 
@@ -268,7 +268,7 @@ class FaceTracker {
     }
   }
 
-  stopAlerting(word) {
+  stopAlerting() {
     if (this.isAlerting) {
       this.isAlerting = false;
     }
@@ -876,6 +876,7 @@ let classifier;
 let predictedWord = "";
 
 let wrongSound;
+let wrongSoundLoop;
 let pingSound;
 
 let tracker;
@@ -902,6 +903,7 @@ function preload() {
   );
 
   wrongSound = loadSound("./assets/sound/buzzer-or-wrong-answer-20582.mp3");
+  wrongSoundLoop = loadSound("./assets/sound/buzzer-or-wrong-answer-20582.mp3");
   pingSound = loadSound("./assets/sound/ping-82822.mp3");
 }
 
@@ -912,7 +914,7 @@ function setup() {
   video.hide();
 
   game = new GameSystem(wrongSound);
-  tracker = new FaceTracker(video, game, wrongSound);
+  tracker = new FaceTracker(video, game, wrongSoundLoop);
   ballgame = new FollowTheBall(tracker, game);
   wordgame = new SayTheWords(classifier, game, wrongSound);
   mailgame = new TrashTheMails(game, wrongSound);
