@@ -903,6 +903,10 @@ let warningMessage;
 
 let permissionsGranted = false;
 
+let countdownTime = 5; // Countdown time in seconds before starting the game
+let countdownActive = true;
+let countdownTimer = null;
+
 function preload() {
   faceMesh = ml5.faceMesh({
     maxFaces: 1,
