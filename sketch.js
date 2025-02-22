@@ -922,9 +922,9 @@ function gotResult(results) {
 }
 
 function startGame() {
-  if (millis() >= 3000) {
+  setTimeout(() => {
     game.update();
-  }
+  }, 5000);
 
   tracker.detect();
   tracker.drawAlerts();
