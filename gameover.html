@@ -5,11 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>capitalism demands your sacrifice</title>
     <link rel="stylesheet" type="text/css" href="gameover.css" />
+
     <link
       rel="icon"
       type="image/x-icon"
       href="./assets/images/office_worker_google.webp"
     />
+    <script src="libraries/p5.min.js"></script>
+    <script src="libraries/p5.sound.min.js"></script>
   </head>
   <body>
     <div id="desktop-container">
@@ -27,6 +30,19 @@
     </div>
 
     <script>
+      let music;
+
+      function preload() {
+        music = loadSound(
+          "./assets/sound/080205_life-lost-game-over-89697.mp3"
+        );
+      }
+
+      function setup() {
+        noCanvas();
+        music.play();
+      }
+
       // Get query parameters from URL
       const urlParams = new URLSearchParams(window.location.search);
       const days = urlParams.get("days");
