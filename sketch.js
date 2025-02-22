@@ -921,7 +921,7 @@ function preload() {
   pingSound = loadSound("./assets/sound/ping-82822.mp3");
 }
 
-function initializeGame() {
+function setup() {
   createCanvas(windowWidth, windowHeight);
   video = createCapture(VIDEO, { flipped: true });
   video.size(width, height);
@@ -990,10 +990,7 @@ async function checkPermissions() {
     document.getElementById("call_for_media").style.display = "none";
 
     permissionsGranted = true;
-    initializeGame();
   } catch (error) {
-    document.getElementById("status").innerText = "Access denied!";
-    document.getElementById("error-message").style.display = "block";
     alert("You need to enable your microphone and camera to enter this page.");
   }
 }
