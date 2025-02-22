@@ -744,7 +744,9 @@ class GameSystem {
       // Start mailgame on Day 2
       console.log("Starting mail challenge.");
       setTimeout(() => {
-        alertChallenge("To remove the mails, drag them to the top right bin");
+        alertChallenge(
+          "To remove the mails, drag them to the top right outbox"
+        );
       }, 2000);
       mailgame.addNewMail(); // Start with one mail
       mailgame.startMailSpawnTimer();
