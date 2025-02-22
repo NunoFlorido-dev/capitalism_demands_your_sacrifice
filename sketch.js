@@ -467,16 +467,16 @@ class SayTheWords {
 
     this.weirdWords = [
       {
-        word: "BABJEEBZIGUAAA",
+        word: "DUIAHDILASHDILHADÇA",
         question: "You won't achieve anything",
       },
       {
-        word: "DORRREEEEPSIAA",
+        word: "IOSJFÇJIFSOÇVHOSÇDVS",
         question: "You will never be successful in my company",
       },
-      { word: "GUPTLOOOOTZAA", question: "You won't know this one" },
+      { word: "UCUCUCUUCCUCUC", question: "You won't know this one" },
       {
-        word: "CRRPSOOOBCHIA",
+        word: "KAKSOPAKSDADAKDA",
         question: "You know you will be fired, don't you?",
       },
     ];
@@ -901,6 +901,8 @@ let game;
 
 let warningMessage;
 
+let permissionsGranted = false;
+
 function preload() {
   faceMesh = ml5.faceMesh({
     maxFaces: 1,
@@ -910,7 +912,7 @@ function preload() {
 
   let soundOptions = { probabilityThreshold: 0, overlapFactor: 0.5 };
   classifier = ml5.soundClassifier(
-    "https://teachablemachine.withgoogle.com/models/bE_DNF6Y3/",
+    "https://teachablemachine.withgoogle.com/models/CyAg5qvfm/",
     soundOptions
   );
 
@@ -919,7 +921,7 @@ function preload() {
   pingSound = loadSound("./assets/sound/ping-82822.mp3");
 }
 
-function setup() {
+function initializeGame() {
   createCanvas(windowWidth, windowHeight);
   video = createCapture(VIDEO, { flipped: true });
   video.size(width, height);
@@ -946,6 +948,8 @@ function gotResult(results) {
 }
 
 function startGame() {
+  if (!permissionsGranted) return; // Ensure game logic only runs when permissions are granted
+
   setTimeout(() => {
     game.update();
   }, 5000);
@@ -959,6 +963,8 @@ function startGame() {
 }
 
 function draw() {
+  if (!permissionsGranted) return; // Stop drawing until permissions are granted
+
   background(220);
   video.loadPixels();
   for (let i = 0; i < video.pixels.length; i += 4) {
@@ -974,3 +980,22 @@ function draw() {
   // If both camera and mic are available, start the game
   startGame();
 }
+
+/* **************************************************************************************** */
+
+async function checkPermissions() {
+  try {
+    // Request access to camera and microphone
+    await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    document.getElementById("call_for_media").style.display = "none";
+
+    permissionsGranted = true;
+    initializeGame();
+  } catch (error) {
+    document.getElementById("status").innerText = "Access denied!";
+    document.getElementById("error-message").style.display = "block";
+    alert("You need to enable your microphone and camera to enter this page.");
+  }
+}
+
+window.onload = checkPermissions;

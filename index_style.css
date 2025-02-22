@@ -210,3 +210,28 @@ canvas {
   font-family: "OT Neue Montreal Regular", sans-serif;
   font-size: 4rem;
 }
+
+#call_for_media{
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #1b6ef5;
+  gap: 0;
+}
+
+#status{
+  font-family: "OT Neue Montreal Regular", sans-serif;
+  font-size: 3rem;
+  color: white;
+  margin: 0;
+}
+
+#error-message{
+  font-family: "OT Neue Montreal Regular", sans-serif;
+  font-size: 2rem;
+  color: white;
+  margin: 0;
+}
