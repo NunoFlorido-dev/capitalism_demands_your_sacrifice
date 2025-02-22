@@ -876,6 +876,8 @@ let wordgame;
 let mailgame;
 let game;
 
+let warningMessage;
+
 function preload() {
   faceMesh = ml5.faceMesh({
     maxFaces: 1,
@@ -945,5 +947,6 @@ function draw() {
   video.updatePixels();
   image(video, 0, 0, width, (width * video.height) / video.width);
 
+  // If both camera and mic are available, start the game
   startGame();
 }

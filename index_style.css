@@ -197,3 +197,16 @@ canvas {
   color: white;
 }
 
+.warning-message {
+  position: fixed;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  width: 100vw;
+  height: 100vh;
+  font-family: "OT Neue Montreal Regular", sans-serif;
+  font-size: 4rem;
+}
