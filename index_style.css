@@ -127,7 +127,7 @@ canvas {
 
 #outbox_tray{
   display: none;
-  position: absolute;
+  position: fixed;
   width: 80px;
   height: 80px;
   display: flex;
@@ -156,9 +156,6 @@ canvas {
   cursor: pointer;
 }
 
-#outbox_tray{
-  display: none;
-}
 
 #outbox_tray img{
   width: 100%;

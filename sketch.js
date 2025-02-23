@@ -578,7 +578,7 @@ class TrashTheMails {
     this.beep = beep;
 
     this.outbox.style.display = "block";
-    this.outbox.style.left = "89.25%";
+    this.outbox.style.right = "4%";
     this.outbox.style.top = "1%";
   }
 
