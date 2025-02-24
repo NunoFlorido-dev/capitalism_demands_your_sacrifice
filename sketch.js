@@ -970,6 +970,18 @@ function draw() {
   if (!permissionsGranted) return; // Stop drawing until permissions are granted
 
   background(220);
+
+  // Adjust the video size to fit the screen but maintain aspect ratio
+  let videoAspectRatio = video.width / video.height;
+  let scaledWidth = width;
+  let scaledHeight = width / videoAspectRatio;
+
+  // If the scaled height is too tall for the screen, adjust width
+  if (scaledHeight > height) {
+    scaledHeight = height;
+    scaledWidth = height * videoAspectRatio;
+  }
+
   video.loadPixels();
   for (let i = 0; i < video.pixels.length; i += 4) {
     let r = video.pixels[i]; // Red channel (assuming grayscale based on red)
@@ -979,7 +991,7 @@ function draw() {
     // Alpha (i+3) remains unchanged
   }
   video.updatePixels();
-  image(video, 0, 0, width, (width * video.height) / video.width);
+  image(video, 0, 0, scaledWidth, scaledHeight);
 
   // If both camera and mic are available, start the game
   startGame();
