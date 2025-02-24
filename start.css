@@ -28,17 +28,18 @@ html, body {
     justify-content: center;
     align-items: center;
     background-color: #1b6ef5;
+    height: 100vh;
+    width: 100vw;
   }
   
 .container{
+  position: fixed;
+  left: 50%;
+  width: 80%;
+  transform: translateX(-50%);
   display: flex;
-  width: 100%;
-  height: 100%;
-  padding-top: 13%;
-  padding-bottom: 10%;
-  padding-left: 10%;
-  padding-right: 10%;
-
+  justify-content: space-between; /* Adjust space between left and right containers */
+  padding: 2rem;
 }
 
 .container .left-container h1{
@@ -118,19 +119,53 @@ text-align: center;
 
 }
 
-@media (max-width: 1080px){
-  .container{
-    flex-direction: column;
+/* Media queries for resizing */
+@media (max-width: 1080px) {
+  .container {
+    flex-direction: column; /* Stack left and right containers */
+    position: relative;
+    width: 90%; /* Make container a bit narrower */
+    top: 0;
+    left: 0;
+    transform: none; /* Remove centering translation */
+  }
+
+  .container .left-container {
+    margin-bottom: 1rem;
+  }
+
+  .container .right-container {
+    margin-top: 1rem;
   }
 }
 
-@media (max-width: 620px){
-
-
-  .container .right-container h1{
-    font-family: "OT Neue Montreal Bold", sans-serif;
-    line-height: 3.25rem;
-    font-size: 2rem;
-    color: white;
+@media (max-width: 620px) {
+  .container .right-container h1 {
+    font-size: 2rem; /* Smaller title size */
   }
+
+  .container .right-container button {
+    width: 70%; /* Slightly bigger button on small screens */
+    font-size: 1.3rem;
+  }
+
+  .container .left-container h1 {
+    font-size: 2rem; /* Adjust for small screens */
+  }
+
+  .container .left-container p,
+  .container .left-container ul li {
+    font-size: 1.2rem; /* Make text smaller for small screens */
+  }
+
+  .container .left-container p:first-of-type, 
+.container .left-container ul{
+margin-top: -1rem;
+}
+
+.container .right-container h1{
+  line-height: 2.75rem;
+}
+
+
 }
