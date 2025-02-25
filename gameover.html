@@ -50,8 +50,8 @@
             console.log("Autoplay prevented. Waiting for user interaction.");
 
             // Add a click listener to play the sound when the user interacts
-            document.addEventListener(
-              "DOMContentLoaded",
+            window.addEventListener(
+              "load",
               () => {
                 if (!music.isPlaying()) {
                   music.play();
