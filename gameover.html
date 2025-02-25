@@ -40,7 +40,26 @@
 
       function setup() {
         noCanvas();
-        music.play();
+
+        // Ensure audio context is started properly
+        userStartAudio()
+          .then(() => {
+            music.play();
+          })
+          .catch((e) => {
+            console.log("Autoplay prevented. Waiting for user interaction.");
+
+            // Add a click listener to play the sound when the user interacts
+            document.addEventListener(
+              "DOMContentLoaded",
+              () => {
+                if (!music.isPlaying()) {
+                  music.play();
+                }
+              },
+              { once: true }
+            ); // Ensures it only runs once
+          });
       }
 
       // Get query parameters from URL
